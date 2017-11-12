@@ -5,6 +5,19 @@ import math
 # Bring data on patient samples from the diagnosis machine to the laboratory with enough molecules to produce medicine!
 from enum import Enum
 
+#SAMPLES	DIAGNOSIS	MOLECULES	LABORATORY  Start area
+#SAMPLES	0	3	3	3   2
+#DIAGNOSIS	3	0	3	4   2
+#MOLECULES	3	3	0	3   2
+#LABORATORY	3	4	3	0   2
+#Start area	2	2	2	2   0
+movement_matrix = [[0,3,3,3,2],
+                   [3,0,3,4,2],
+                   [3,3,0,3,2],
+                   [3,4,3,0,2],
+                   [2,2,2,2,0]]
+
+
 class Location(Enum):
     SAMPLES = 0
     DIAGNOSIS = 1
