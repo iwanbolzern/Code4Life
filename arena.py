@@ -28,7 +28,7 @@ typeToStr = ["A", "B", "C", "D", "E"]
 TypeToInt = {"A": 0, "B": 1, "C": 2, "D": 3, "E": 4}
 Distances = [[0,3,3,3], [3,0,3,4], [3,3,0,3], [3,4,3,0], [2,2,2,2]] #Distances from everywhere to everywhere
 
-class Sample:
+class SampleTemplate:
     def __init__(self):
         self.cost = [] * 5;
         self.score = None
@@ -36,18 +36,13 @@ class Sample:
 
 
 
-struct sample:public sample_template{
-    bool diagnosed;
-    int id,rank,owner;
-    inline void operator=(const sample_template &a)noexcept{
-        Cost=a.Cost;
-        score=a.score;
-        exp=a.exp;
-    }
-    inline sample(const sample_template &a)noexcept{
-        *this=a;
-    }
-};
+class Sample(SampleTemplate):
+    def __init__(self):
+        self.diagnosed=False
+        self.id = None
+        self.rank = None
+        self.owner = None
+
 
 const array<vector<sample_template>,3> SampleList{
     vector<sample_template>{
