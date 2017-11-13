@@ -17,6 +17,8 @@ movement_matrix = [[0,3,3,3,2],
                    [3,4,3,0,2],
                    [2,2,2,2,0]]
 
+def debug(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 class Location(Enum):
     SAMPLES = 0
@@ -47,9 +49,10 @@ class Sample:
         self.cost = [int(cost_a), int(cost_b), int(cost_c), int(cost_d), int(cost_e)]
 
     @property
-    def simulation_score(self):
+    def simulation_score(self, state):
+        debug(state.molecules_available)
         #TODO: implement this rule
-        (MoleculesAvailable & & EnoughSpaceToTake ? 100: MoleculesAvailable? 1: 0)-MissingMolecules * 1e-3:
+        # (MoleculesAvailable & & EnoughSpaceToTake ? 100: MoleculesAvailable? 1: 0)-MissingMolecules * 1e-3:
         pass
 
 
@@ -93,7 +96,7 @@ class State:
 
     @property
     def sample_robot_a(self):
-        return [s for s in self.samples if s.carried_by == 0]
+        return self.robot_a.samples
 
     @property
     def sample_robot_a_count(self):
@@ -101,7 +104,7 @@ class State:
 
     @property
     def undiagnosed_sample_robot_a(self):
-        return [s for s in self.samples if s.carried_by == 0 and sum(s.cost) <= 0]
+        return [s for s in self.robot_a.samples if sum(s.cost) <= 0]
 
     @property
     def undiagnosed_sample_robot_a_count(self):
