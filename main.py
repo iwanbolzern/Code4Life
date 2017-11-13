@@ -80,7 +80,7 @@ class State:
     def __init__(self):
         self.robot_a = None
         self.robot_b = None
-        self.available_molecules = None
+        self.available_molecules = None #[#a, #b...]
         self.cloud_samples = []
 
     def add_sample(self, s):

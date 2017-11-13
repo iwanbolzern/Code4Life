@@ -1,6 +1,8 @@
 import copy
 from enum import Enum
 
+from main import State
+
 
 class Player(Enum):
     me = 0
@@ -19,7 +21,12 @@ def eval(state):
 def possible_moves(state, player):
     pass
 
-def simulate_action(state, my_action, enemy_action):
+def simulate_action(state, my_action, enemy_action) -> State:
+    """ Returns new game state after both actions are performed
+    :param state:
+    :param my_action:
+    :param enemy_action:
+    """
     pass
 
 def minimax(state, depth, max_depth, alpha, beta) -> Variation:
@@ -52,7 +59,24 @@ def minimax(state, depth, max_depth, alpha, beta) -> Variation:
 
     return best_variation
 
-
+    action
+    Decide_Move(state)
+    {
+        variation
+    best_var;
+    depth = 1;
+    while (depth <= 201 - turn){// Don't look past end of game
+    try{
+    best_var=Minimax(S, 0, depth, -inf, +inf); // Minimax throws an exception if time runs out
+    ++depth;
+    }
+    catch(...)
+    {
+    break;
+    }
+    }
+    return best_var.Moves[0][0];
+    }
 # variation Minimax(state,depth,max_depth,alpha,beta){
 #     if(depth==max_depth){
 #         return variation{Eval(state),{}};
