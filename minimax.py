@@ -1,8 +1,9 @@
 import copy
 from enum import Enum
+from typing import List
 
 from arena import Action
-from main import State
+from main import State, Location
 
 
 class Player(Enum):
@@ -11,9 +12,9 @@ class Player(Enum):
 
 class Move:
 
-    def __init__(self):
-        self.cmd: Action = None
-        self.arg = None
+    def __init__(self, cmd: Action=None, arg=None):
+        self.cmd: Action = cmd
+        self.arg = arg
 
 class Variation:
 
@@ -25,8 +26,48 @@ class Variation:
 def eval(state):
     pass
 
-def possible_moves(state, player):
-    pass
+def get_rank(state, player):
+    total_ex = sum(player.expertise)
+    if total_ex >= 12:
+        return 3
+    elif total_ex >= 9:
+        return 2
+    else:
+        return 1
+
+def possible_moves(state, player) -> List[Move]:
+    pos_moves = []
+    # start position
+    if state.robot_a.target == Location.START_POS:
+        pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
+
+    # Sample position
+    elif state.robot_a.target == Location.SAMPLES:
+        #TODO: check if we should allow to go to Molecules or Factory
+        if state.sample_robot_a_count < 3:
+            pos_moves.append(Move(Action.CONNECT, get_rank(state, player)))
+        else:
+            return pos_moves.ap(Move(Action.GOTO, Location.DIAGNOSIS))
+
+    # Diagnosis Station
+    elif state.robot_a.target == Location.DIAGNOSIS:
+        if state.undiagnosed_sample_robot_a_count > 0:
+            return 'CONNECT {}'.format(state.undiagnosed_sample_robot_a[0].id)
+        else:
+            return 'GOTO MOLECULES'
+    elif state.robot_a.target == Location.MOLECULES:
+        if state.robot_a.storage_size < 10 and state.get_missing_molecule_id:
+            return 'CONNECT {}'.format(state.get_missing_molecule_id)
+        else:
+            return 'GOTO LABORATORY'
+    elif state.robot_a.target == Location.LABORATORY:
+        if state.sample_robot_a_count > 0 and \
+                state.robot_a.satisfy(state.sample_robot_a[0].cost):
+            return 'CONNECT {}'.format(state.sample_robot_a[0].id)
+        else:
+            return 'GOTO DIAGNOSIS'
+
+    return pos_moves
 
 def simulate_action(state, my_action, enemy_action) -> State:
     """ Returns new game state after both actions are performed
@@ -66,24 +107,24 @@ def minimax(state, depth, max_depth, alpha, beta) -> Variation:
 
     return best_variation
 
-    action
-    Decide_Move(state)
-    {
-        variation
-    best_var;
-    depth = 1;
-    while (depth <= 201 - turn){// Don't look past end of game
-    try{
-    best_var=Minimax(S, 0, depth, -inf, +inf); // Minimax throws an exception if time runs out
-    ++depth;
-    }
-    catch(...)
-    {
-    break;
-    }
-    }
-    return best_var.Moves[0][0];
-    }
+    # action
+    # Decide_Move(state)
+    # {
+    #     variation
+    # best_var;
+    # depth = 1;
+    # while (depth <= 201 - turn){// Don't look past end of game
+    # try{
+    # best_var=Minimax(S, 0, depth, -inf, +inf); // Minimax throws an exception if time runs out
+    # ++depth;
+    # }
+    # catch(...)
+    # {
+    # break;
+    # }
+    # }
+    # return best_var.Moves[0][0];
+    # }
 # variation Minimax(state,depth,max_depth,alpha,beta){
 #     if(depth==max_depth){
 #         return variation{Eval(state),{}};
