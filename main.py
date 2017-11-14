@@ -48,12 +48,6 @@ class Sample:
         self.health = int(health)
         self.cost = [int(cost_a), int(cost_b), int(cost_c), int(cost_d), int(cost_e)]
 
-    @property
-    def simulation_score(self, state):
-        debug(state.molecules_available)
-        #TODO: implement this rule
-        # (MoleculesAvailable & & EnoughSpaceToTake ? 100: MoleculesAvailable? 1: 0)-MissingMolecules * 1e-3:
-        pass
 
 
 class Robot:
@@ -69,6 +63,23 @@ class Robot:
     @property
     def storage_size(self):
         return sum(self.storage)
+
+    @property
+    def undiagnosed_samples(self):
+        return [s for s in self.samples if sum(s.cost) <= 0]
+
+    @property
+    def diagnosed_samples(self):
+        return [s for s in self.samples if sum(s.cost) > 0]
+
+    def get_sorted_samples(self, state: State):
+        return self.diagnosed_samples.sort(key=lambda s: Robot.sample_sort(s, self, state))
+
+    @staticmethod
+    def sample_sort(sample: Sample, player, state: State):
+        pass
+    # TODO: implement this rule
+    # (MoleculesAvailable & & EnoughSpaceToTake ? 100: MoleculesAvailable? 1: 0)-MissingMolecules * 1e-3:
 
     def satisfy(self, cost):
         collected_molecules = copy.deepcopy(self.storage)

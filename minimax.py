@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List
 
 from arena import Action
-from main import State, Location
+from main import State, Location, Robot
 
 
 class Player(Enum):
@@ -35,7 +35,7 @@ def get_rank(state, player):
     else:
         return 1
 
-def possible_moves(state, player) -> List[Move]:
+def possible_moves(state: State, player: Robot) -> List[Move]:
     pos_moves = []
     # start position
     if state.robot_a.target == Location.START_POS:
@@ -51,21 +51,12 @@ def possible_moves(state, player) -> List[Move]:
 
     # Diagnosis Station
     elif state.robot_a.target == Location.DIAGNOSIS:
-        if state.undiagnosed_sample_robot_a_count > 0:
-            return 'CONNECT {}'.format(state.undiagnosed_sample_robot_a[0].id)
-        else:
-            return 'GOTO MOLECULES'
-    elif state.robot_a.target == Location.MOLECULES:
-        if state.robot_a.storage_size < 10 and state.get_missing_molecule_id:
-            return 'CONNECT {}'.format(state.get_missing_molecule_id)
-        else:
-            return 'GOTO LABORATORY'
-    elif state.robot_a.target == Location.LABORATORY:
-        if state.sample_robot_a_count > 0 and \
-                state.robot_a.satisfy(state.sample_robot_a[0].cost):
-            return 'CONNECT {}'.format(state.sample_robot_a[0].id)
-        else:
-            return 'GOTO DIAGNOSIS'
+        if player.undiagnosed_samples:
+            pos_moves.append(Move(Action.CONNECT, player.undiagnosed_samples[0]))
+        elif len(player.diagnosed_samples) >= 3:
+            pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
+        elif len(player.diagnosed_samples) < 3:
+            pass
 
     return pos_moves
 
