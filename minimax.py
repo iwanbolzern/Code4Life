@@ -1,12 +1,19 @@
 import copy
 from enum import Enum
 
+from arena import Action
 from main import State
 
 
 class Player(Enum):
     me = 0
     enemy = 1
+
+class Move:
+
+    def __init__(self):
+        self.cmd: Action = None
+        self.arg = None
 
 class Variation:
 
