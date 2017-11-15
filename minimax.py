@@ -2,6 +2,7 @@ import copy
 from enum import Enum
 from typing import List
 
+import utils
 from arena import Action
 from main import State, Location, Robot
 
@@ -38,25 +39,54 @@ def get_rank(state, player):
 def possible_moves(state: State, player: Robot) -> List[Move]:
     pos_moves = []
     # start position
-    if state.robot_a.target == Location.START_POS:
+    if player.target == Location.START_POS:
         pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
 
     # Sample position
-    elif state.robot_a.target == Location.SAMPLES:
+    elif player.target == Location.SAMPLES:
         #TODO: check if we should allow to go to Molecules or Factory
         if state.sample_robot_a_count < 3:
             pos_moves.append(Move(Action.CONNECT, get_rank(state, player)))
         else:
             return pos_moves.ap(Move(Action.GOTO, Location.DIAGNOSIS))
 
-    # Diagnosis Station
-    elif state.robot_a.target == Location.DIAGNOSIS:
+    # Diagnosis Station TODO: check if this rules make sense
+    elif player.target == Location.DIAGNOSIS:
         if player.undiagnosed_samples:
             pos_moves.append(Move(Action.CONNECT, player.undiagnosed_samples[0]))
         elif len(player.diagnosed_samples) >= 3:
-            pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
+            pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
         elif len(player.diagnosed_samples) < 3:
-            pass
+            pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
+            # take a sample from the cloud
+            if state.cloud_samples:
+                id = state.cloud_samples.sort(key=lambda x: utils.sample_sort())[0].id
+                pos_moves.append(Move(Action.CONNECT, id))
+
+        # drop worst sample into the cloud
+        if player.diagnosed_samples:
+            id = player.get_sorted_samples(state)[-1]
+            pos_moves.append(Move(Action.CONNECT, id))
+
+        if player.ready_samples:
+            pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
+
+    elif player.target == Location.MOLECULES:
+        missing_molecule = utils.get_next_molecule(player.missing_molecules, state)
+        if sum(player.storage) < 10 and missing_molecule:
+            pos_moves.append(Move(Action.CONNECT, missing_molecule))
+        # move to other station
+        if player.ready_samples:
+            pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
+        elif len(player.samples) < 3:
+            pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
+        else:
+            pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
+        # just wait
+        if player.score + sum(player.ready_samples, key=lambda s: s.cost) > \
+            state.get_enemy(player).score + sum(state.get_enemy(player).ready_samples, key=lambda s: s.cost):
+            pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+
 
     return pos_moves
 

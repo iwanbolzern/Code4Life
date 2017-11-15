@@ -11,6 +11,8 @@ from enum import Enum
 #MOLECULES	3	3	0	3   2
 #LABORATORY	3	4	3	0   2
 #Start area	2	2	2	2   0
+import utils
+
 movement_matrix = [[0,3,3,3,2],
                    [3,0,3,4,2],
                    [3,3,0,3,2],
@@ -72,22 +74,38 @@ class Robot:
     def diagnosed_samples(self):
         return [s for s in self.samples if sum(s.cost) > 0]
 
+    @property
+    def ready_samples(self):
+        ready_samples = []
+        collected_molecules = copy.deepcopy(self.storage)
+        for s in self.get_sorted_samples():
+            satisfy, collected_molecules = Robot.satisfy(s.cost, collected_molecules)
+            if satisfy:
+                ready_samples.append(s)
+        return ready_samples
+
     def get_sorted_samples(self, state: State):
-        return self.diagnosed_samples.sort(key=lambda s: Robot.sample_sort(s, self, state))
+        return self.diagnosed_samples.sort(key=lambda s: utils.sample_sort(s, self, state))
+
+    @property
+    def missing_molecules(self):
+        missing_molecules = []
+        for i, sample in zip(range(state.get_sorted_samples(state)), state.get_sorted_samples(state)):
+            missing_molecules.append(copy.deepcopy(self.storage) if i == 0 else missing_molecules[i - 1])
+            for m_type, cost in zip(range(len(sample.cost)), sample.cost):
+                missing_molecules[i][m_type] -= cost
+                if missing_molecules[i][m_type] < 0:
+                    return MoleculeType(m_type).name
+
+        return None
 
     @staticmethod
-    def sample_sort(sample: Sample, player, state: State):
-        pass
-    # TODO: implement this rule
-    # (MoleculesAvailable & & EnoughSpaceToTake ? 100: MoleculesAvailable? 1: 0)-MissingMolecules * 1e-3:
-
-    def satisfy(self, cost):
-        collected_molecules = copy.deepcopy(self.storage)
+    def satisfy(cost, collected_molecules):
         for m_type, cost in zip(range(len(cost)), cost):
             collected_molecules[m_type] -= cost
             if collected_molecules[m_type] < 0:
-                return False
-        return True
+                return False, collected_molecules
+        return True, collected_molecules
 
 class State:
 
@@ -136,17 +154,8 @@ class State:
         else:
             return 1
 
-
-    @property
-    def get_missing_molecule_id(self):
-        collected_molecules = copy.deepcopy(self.robot_a.storage)
-        for sample in state.sample_robot_a:
-            for m_type, cost in zip(range(len(sample.cost)), sample.cost):
-                collected_molecules[m_type] -= cost
-                if collected_molecules[m_type] < 0:
-                    return MoleculeType(m_type).name
-
-        return None
+    def get_enemy(self, robot):
+        return self.robot_a if robot == self.robot_b else self.robot_b
 
 def read_input():
     state = State()
