@@ -1,6 +1,3 @@
-import shutil
-import glob
-
 outfile = 'bin/main.py'
 files = [
     'src/data_holder.py',
@@ -19,10 +16,6 @@ excludes = [
 
 with open(outfile, 'w') as outfile:
     for filename in files:
-        if filename == outfile:
-            # don't want to copy the output into the output
-            continue
-
         with open(filename, 'r') as readfile:
             outfile.write('####################\n')
             for line in readfile:
