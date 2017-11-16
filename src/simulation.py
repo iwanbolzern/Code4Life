@@ -1,4 +1,4 @@
-from src.data_holder import State, Move
+from data_holder import State, Move
 
 #SAMPLES	DIAGNOSIS	MOLECULES	LABORATORY  Start area
 #SAMPLES	0	3	3	3   2

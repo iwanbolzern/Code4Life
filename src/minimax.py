@@ -1,19 +1,16 @@
 import copy
 from typing import List
 
-import utils
+from utils import sample_sort, get_next_molecule
+from data_holder import State, Robot, Location, Action, Move
 from simulation import simulate_action
 
-from src.data_holder import State, Robot, Location, Action, Move
-
-
 class Variation:
-
     def __init(self, score, moves):
         self.score = score
         self.moves = moves
 
-def eval(state):
+def eval(state: State):
     pass
 
 def get_rank(state, player):
@@ -37,7 +34,7 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
         if len(player.samples) < 3:
             pos_moves.append(Move(Action.CONNECT, get_rank(state, player)))
         else:
-            return pos_moves.ap(Move(Action.GOTO, Location.DIAGNOSIS))
+            return pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
 
     # Diagnosis Station TODO: check if this rules make sense
     elif player.target == Location.DIAGNOSIS:
@@ -49,7 +46,7 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
             pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
             # take a sample from the cloud
             if state.cloud_samples:
-                id = state.cloud_samples.sort(key=lambda x: utils.sample_sort())[0].id
+                id = state.cloud_samples.sort(key=lambda x: sample_sort(x,player,state))[0].id
                 pos_moves.append(Move(Action.CONNECT, id))
 
         # drop worst sample into the cloud
@@ -61,7 +58,7 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
             pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
     # Molecules Station
     elif player.target == Location.MOLECULES:
-        missing_molecule = utils.get_next_molecule(player.missing_molecules, state)
+        missing_molecule = get_next_molecule(player.missing_molecules, state)
         if sum(player.storage) < 10 and missing_molecule:
             pos_moves.append(Move(Action.CONNECT, missing_molecule))
         # move to other station

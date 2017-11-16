@@ -1,9 +1,6 @@
 import copy
 from enum import Enum
 
-from src import utils
-
-
 class Action(Enum):
     GOTO = 0
     CONNECT = 1
@@ -43,6 +40,25 @@ class Sample:
         self.cost = [int(cost_a), int(cost_b), int(cost_c), int(cost_d), int(cost_e)]
 
 
+class State:
+
+    def __init__(self):
+        self.robot_a = None
+        self.robot_b = None
+        self.available_molecules = None #[#a, #b...]
+        self.cloud_samples = []
+        self.projects = None
+
+    def add_sample(self, s):
+        if s.carried_by == -1:
+            self.cloud_samples.append(s)
+        elif s.carried_by == 0:
+            self.robot_a.samples.append(s)
+        else:
+            self.robot_b.samples.append(s)
+
+    def get_enemy(self, robot):
+        return self.robot_a if robot == self.robot_b else self.robot_b
 
 class Robot:
 
@@ -95,23 +111,3 @@ class Robot:
                 return False, collected_molecules
         return True, collected_molecules
 
-
-class State:
-
-    def __init__(self):
-        self.robot_a = None
-        self.robot_b = None
-        self.available_molecules = None #[#a, #b...]
-        self.cloud_samples = []
-        self.projects = None
-
-    def add_sample(self, s):
-        if s.carried_by == -1:
-            self.cloud_samples.append(s)
-        elif s.carried_by == 0:
-            self.robot_a.samples.append(s)
-        else:
-            self.robot_b.samples.append(s)
-
-    def get_enemy(self, robot):
-        return self.robot_a if robot == self.robot_b else self.robot_b
