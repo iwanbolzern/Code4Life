@@ -10,16 +10,6 @@ TimeLimit = 0.1 * (1 if Timeout else 10)
 
 stop = False
 
-class Location(Enum):
-    SAMPLES = 0
-    DIAGNOSIS = 1
-    MOLECULES = 2
-    LABORATORY = 3
-    START = 4
-
-class Action(Enum):
-    GOTO = 0
-    CONNECT = 1
 
 LocationToString = ["SAMPLES", "DIAGNOSIS", "MOLECULES", "LABORATORY", "START_POS"]
 StrToLocation = {"SAMPLES": Location.SAMPLES, "DIAGNOSIS": Location.DIAGNOSIS, "MOLECULES": Location.MOLECULES, "LABORATORY": Location.LABORATORY}

@@ -3,19 +3,12 @@ from enum import Enum
 from typing import List
 
 import utils
-from arena import Action
-from main import State, Location, Robot
+from data_holder import State, Robot, Location, Action, Move
 
 
 class Player(Enum):
     me = 0
     enemy = 1
-
-class Move:
-
-    def __init__(self, cmd: Action=None, arg=None):
-        self.cmd: Action = cmd
-        self.arg = arg
 
 class Variation:
 
@@ -45,7 +38,7 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
     # Sample position
     elif player.target == Location.SAMPLES:
         #TODO: check if we should allow to go to Molecules or Factory
-        if state.sample_robot_a_count < 3:
+        if len(player.samples) < 3:
             pos_moves.append(Move(Action.CONNECT, get_rank(state, player)))
         else:
             return pos_moves.ap(Move(Action.GOTO, Location.DIAGNOSIS))
@@ -70,7 +63,7 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
 
         if player.ready_samples:
             pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
-
+    # Molecules Station
     elif player.target == Location.MOLECULES:
         missing_molecule = utils.get_next_molecule(player.missing_molecules, state)
         if sum(player.storage) < 10 and missing_molecule:
@@ -86,6 +79,22 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
         if player.score + sum(player.ready_samples, key=lambda s: s.cost) > \
             state.get_enemy(player).score + sum(state.get_enemy(player).ready_samples, key=lambda s: s.cost):
             pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+
+    elif player.target == Location.LABORATORY:
+        if player.ready_samples:
+            pos_moves.append(Move(Action.CONNECT, player.ready_samples[0]))
+
+            if player.score + sum(player.ready_samples, key=lambda s: s.cost) > \
+            state.get_enemy(player).score + sum(state.get_enemy(player).ready_samples, key=lambda s: s.cost) and \
+                    state.get_enemy(player).target != Location.SAMPLES:
+                pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
+        else:
+            pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
+            if player.diagnosed_samples:
+                pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+
+            if state.cloud_samples:
+                pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
 
 
     return pos_moves
@@ -146,35 +155,3 @@ def minimax(state, depth, max_depth, alpha, beta) -> Variation:
     # }
     # return best_var.Moves[0][0];
     # }
-# variation Minimax(state,depth,max_depth,alpha,beta){
-#     if(depth==max_depth){
-#         return variation{Eval(state),{}};
-#     }
-#     array<vector<action>,2> Branch={Possible_Moves(state,player0),Possible_Moves(state,player1)};
-#     variation Best_var={-infinity,{}};
-#     for(action mv:Branch[0]){
-#         variation Best_var2{+infinity,{}};
-#         local_beta=beta;
-#         for(action mv2:Branch[1]){
-#             state2=state;
-#             SimulateActions(state2,{mv,mv2});
-#             variation var=Minimax(state2,depth+1,max_depth,alpha,local_beta);
-#             if(var.score<Best_var2.score){
-#                 Best_var2=var;
-#                 Best_var2.Moves.insert(at beginning,{mv,mv2});
-#             }
-#             local_beta=min(var.score,local_beta);
-#             if(local_beta<=alpha){
-#                 break;
-#             }
-#         }
-#         if(Best_var2.score>Best_var.score){
-#             Best_var=Best_var2;
-#         }
-#         alpha=max(alpha,Best_var2.score);
-#         if(beta<=alpha){
-#             break;
-#         }
-#     }
-#     return Best_var;
-# }
