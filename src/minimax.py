@@ -2,8 +2,10 @@ import copy
 from typing import List
 
 from utils import sample_sort, get_next_molecule
-from data_holder import State, Robot, Location, Action, Move
+from data_holder import State, Robot, Location, Action, Move, Sample
 from simulation import simulate_action
+
+expertise_weight = 10
 
 class Variation:
     def __init(self, score, moves):
@@ -11,7 +13,47 @@ class Variation:
         self.moves = moves
 
 def eval(state: State):
-    pass
+    return eval_robot(state, state.robot_a) - eval_robot(state,state.robot_b)
+
+def eval_robot(state: State, player: Robot):
+    eval_score = player.score
+    eval_score += sum(expertise_weight * player.expertise)
+
+    sample_scores = [eval_sample(state, player, s) for s in player.samples]
+
+    return eval_score
+
+def eval_sample(state: State, player: Robot, sample: Sample):
+    min_score = 1 # rank 1 min score
+    if sample.rank == 2:
+        min_score = 10
+    if sample.rank == 3:
+        min_score = 30
+
+    # sample is undiagnosed
+    if sum(sample.cost) == 0:
+        return 0.15 * (min_score + expertise_weight)
+
+    # sample is diagnosed but unknown (simulated)
+    # TODO
+
+    # sample is ready for LABORATORY
+    missing_molecules = get_missing_molecules(sample, player.storage)
+    if sum(missing_molecules) == 0:
+        return 0.85 * (sample.health + expertise_weight)
+
+    # missing molecules, but are available
+    missing_molecules = get_missing_molecules(sample, state.available_molecules)
+    if sum(missing_molecules) == 0:
+        return 0.5 * (sample.health + expertise_weight)
+
+    # unproducible
+    return 0.05 * (sample.health + expertise_weight)
+
+def get_missing_molecules(sample: Sample, container: [int]) -> [int]:
+    difference = list(map(int.__sub__, container, sample.cost))
+    difference = [0 if d < 0 else d for d in difference]
+    return difference
 
 def get_rank(state, player):
     total_ex = sum(player.expertise)
