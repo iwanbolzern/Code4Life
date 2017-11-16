@@ -1,8 +1,8 @@
+import copy
 from enum import Enum
 
-import copy
+from src import utils
 
-import utils
 
 class Action(Enum):
     GOTO = 0

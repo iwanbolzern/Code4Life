@@ -1,10 +1,11 @@
 import copy
-from enum import Enum
 from typing import List
 
 import utils
-from data_holder import State, Robot, Location, Action, Move
 from simulation import simulate_action
+
+from src.data_holder import State, Robot, Location, Action, Move
+
 
 class Variation:
 

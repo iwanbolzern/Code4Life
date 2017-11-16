@@ -1,7 +1,8 @@
 from typing import List
 
-from data_holder import Move, Action, MoleculeType
 from main import Sample, State
+
+from src.data_holder import Move, Action, MoleculeType
 
 
 def sample_sort(sample: Sample, player, state: State):

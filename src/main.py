@@ -1,11 +1,11 @@
-import sys
-
 import copy
+import sys
 from threading import Timer, Thread, Event
 
 import utils
-from data_holder import State, Robot, Sample, Project, Location, Action, Move
 from minimax import Variation, minimax
+
+from src.data_holder import State, Robot, Sample, Project, Location, Action, Move
 
 
 def debug(*args, **kwargs):
