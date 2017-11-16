@@ -11,7 +11,7 @@ class Action(Enum):
 class Move:
 
     def __init__(self, cmd: Action=None, arg=None):
-        self.cmd: Action = cmd
+        self.action: Action = cmd
         self.arg = arg
 
 class Location(Enum):
@@ -95,6 +95,7 @@ class Robot:
                 return False, collected_molecules
         return True, collected_molecules
 
+
 class State:
 
     def __init__(self):
@@ -102,6 +103,7 @@ class State:
         self.robot_b = None
         self.available_molecules = None #[#a, #b...]
         self.cloud_samples = []
+        self.projects = None
 
     def add_sample(self, s):
         if s.carried_by == -1:

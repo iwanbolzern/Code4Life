@@ -4,18 +4,13 @@ from typing import List
 
 import utils
 from data_holder import State, Robot, Location, Action, Move
-
-
-class Player(Enum):
-    me = 0
-    enemy = 1
+from simulation import simulate_action
 
 class Variation:
 
     def __init(self, score, moves):
         self.score = score
-        self.moves = moves # array of pair of actions vector<array<action,2>> Moves;
-
+        self.moves = moves
 
 def eval(state):
     pass
@@ -99,20 +94,12 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
 
     return pos_moves
 
-def simulate_action(state, my_action, enemy_action) -> State:
-    """ Returns new game state after both actions are performed
-    :param state:
-    :param my_action:
-    :param enemy_action:
-    """
-    pass
-
 def minimax(state, depth, max_depth, alpha, beta) -> Variation:
     if depth == max_depth:
         return Variation(eval(state), [])
 
-    my_branch = possible_moves(state, Player.me)
-    enemy_branch = possible_moves(state, Player.enemy)
+    my_branch = possible_moves(state, state.robot_a)
+    enemy_branch = possible_moves(state, state.robot_b)
 
     best_variation = Variation(float('-inf'), []) #float just bc there is no int('-inf')
     for my_action in my_branch:
@@ -136,22 +123,3 @@ def minimax(state, depth, max_depth, alpha, beta) -> Variation:
             break
 
     return best_variation
-
-    # action
-    # Decide_Move(state)
-    # {
-    #     variation
-    # best_var;
-    # depth = 1;
-    # while (depth <= 201 - turn){// Don't look past end of game
-    # try{
-    # best_var=Minimax(S, 0, depth, -inf, +inf); // Minimax throws an exception if time runs out
-    # ++depth;
-    # }
-    # catch(...)
-    # {
-    # break;
-    # }
-    # }
-    # return best_var.Moves[0][0];
-    # }

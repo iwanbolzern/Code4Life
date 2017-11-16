@@ -1,5 +1,6 @@
 from typing import List
 
+from data_holder import Move, Action, MoleculeType
 from main import Sample, State
 
 
@@ -15,3 +16,12 @@ def get_next_molecule(missing_molecules: List[List[int]], state: State):
             if missing_count < 0 and state.available_molecules[type] > 0:
                 return type
     return None
+
+def move_to_string(move: Move):
+    if move.action == Action.GOTO:
+        return '{} {}'.format(move.action.name, move.arg.name)
+    elif move.action == Action.CONNECT:
+        if isinstance(move.arg, MoleculeType):
+            return '{} {}'.format(move.action.name, move.arg.name)
+        else:
+            return '{} {}'.format(move.action.name, move.arg)
