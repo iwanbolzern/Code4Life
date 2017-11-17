@@ -1,3 +1,4 @@
+import copy
 from data_holder import State, Move
 
 #SAMPLES	DIAGNOSIS	MOLECULES	LABORATORY  Start area
@@ -6,6 +7,8 @@ from data_holder import State, Move
 #MOLECULES	3	3	0	3   2
 #LABORATORY	3	4	3	0   2
 #Start area	2	2	2	2   0
+from src.data_holder import Robot, Action, Location
+
 movement_matrix = [[0,3,3,3,2],
                    [3,0,3,4,2],
                    [3,3,0,3,2],
@@ -18,7 +21,16 @@ def simulate_action(state: State, my_action: Move, enemy_action: Move) -> State:
     :param my_action:
     :param enemy_action:
     """
-    pass
+
+    state_before = copy.deepcopy(state)
+
+def simulate_player(state: State, player: Robot, move: Move):
+    if player.eta == 0:
+        if move.action == Action.GOTO:
+            player.eta = movement_matrix[player.target][move.arg]
+            player.target = move.arg
+        else:
+            if player.target == Location.SAMPLES and move.arg in [1,2,3]:
 
 
 void Simulate(state &S,const array<action,N> &M){
