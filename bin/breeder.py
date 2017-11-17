@@ -1,6 +1,7 @@
 outfile = 'bin/main.py'
 files = [
     'src/data_holder.py',
+    'src/simulation_data.py',
     'src/utils.py',
     'src/minimax.py',
     'src/simulation.py',

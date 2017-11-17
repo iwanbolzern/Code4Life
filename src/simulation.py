@@ -18,19 +18,20 @@ movement_matrix = [[0,3,3,3,2],
                    [3,4,3,0,2],
                    [2,2,2,2,0]]
 
-def simulate_action(state: State, my_action: Move, enemy_action: Move) -> State:
+def simulate_action(state: State, my_action: Move, enemy_action: Move):
     """ Returns new game state after both actions are performed
     :param state:
     :param my_action:
     :param enemy_action:
     """
 
-    state_before = copy.deepcopy(state)
+    simulate_player(state, state.robot_a, my_action)
+    simulate_player(state, state.robot_b, enemy_action)
 
 def simulate_player(state: State, player: Robot, move: Move):
     if player.eta == 0:
         if move.action == Action.GOTO:
-            player.eta = movement_matrix[player.target][move.arg]
+            player.eta = movement_matrix[player.target.value][move.arg.value]
             player.target = move.arg
 
         elif move.action == Action.CONNECT:
@@ -49,16 +50,16 @@ def simulate_player(state: State, player: Robot, move: Move):
             elif player.target == Location.LABORATORY:
                 samples = list(filter(lambda s: s.id == move.arg, player.samples))
                 if len(samples) == 0:
-                    raise "Invalid sample " +  move.arg
+                    raise "Invalid sample " + move.arg
 
                 sample = samples[0]
-                difference = get_missing_molecules(sample, player.storage)
-                if sum(difference) > 0:
-                    raise "Molecules not available for " + move.arg
+                # difference = positive_list_difference(player.storage, sample.cost)
+                # if sum(difference) > 0:
+                #    raise "Molecules not available for " + move.arg
 
                 player.storage = list(map(int.__sub__, player.storage, sample.cost))
-                player.score += sample.score
-                player.expertise[sample.expertise] += 1
+                player.score += sample.health
+                player.expertise[sample.exp.value] += 1
                 state.remove_sample(sample)
 
             elif player.target == Location.DIAGNOSIS:
@@ -80,8 +81,10 @@ def simulate_player(state: State, player: Robot, move: Move):
                         sample.carried_by = player.id
                         state.add_sample(sample)
 
-                if len(player_samples) == 0 or len(cloud_samples) == 0:
-                    raise "Invalid sample " + move.arg
+                if len(player_samples) == 0 and len(cloud_samples) == 0:
+                    debug([s.id for s in player_samples])
+                    debug([s.id for s in cloud_samples])
+                    raise Exception("Invalid sample " + str(move.arg))
 
     player.eta = max(0, player.eta - 1)
     for project in state.projects:

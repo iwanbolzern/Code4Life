@@ -1,7 +1,7 @@
 import copy
 from enum import Enum
 
-from src.arena import Sample
+from utils import list_difference, sample_sort
 
 
 class Action(Enum):
@@ -28,21 +28,23 @@ class MoleculeType(Enum):
     D = 3
     E = 4
 
-class Project:
 
+class Project:
     def __init__(self, expertise):
         self.req_expertise = expertise
+        self.completed = False
 
 
 class Sample:
 
-    def __init__(self, sample_id, carried_by, rank, expertise_gain, health, cost_a, cost_b, cost_c, cost_d, cost_e):
-        self.id = int(sample_id)
-        self.carried_by = int(carried_by)
-        self.rank = int(rank)
-        self.health = int(health)
-        self.cost = [int(cost_a), int(cost_b), int(cost_c), int(cost_d), int(cost_e)]
-        self.exp = expertise_gain
+    @staticmethod
+    def from_input(sample_id, carried_by, rank, expertise_gain, health, cost_a, cost_b, cost_c, cost_d, cost_e):
+        sample = Sample([int(cost_a), int(cost_b), int(cost_c), int(cost_d), int(cost_e)], health, expertise_gain)
+        sample.id = int(sample_id)
+        sample.carried_by = int(carried_by)
+        sample.rank = int(rank)
+        sample.cost = sample.cost_tmp
+        return sample
 
     def __init__(self, cost, health, exp):
         """ This is for a simulated sample
@@ -50,9 +52,10 @@ class Sample:
         :param health:
         :param exp:
         """
-        self.health = health
-        self.exp = exp
+        self.health = int(health)
+        self.exp = MoleculeType[exp] if exp != '0' else None
         self.cost_tmp = cost
+        self.cost = [0] * 5
 
     @property
     def diagnosed(self):
@@ -106,30 +109,25 @@ class Robot:
     def diagnosed_samples(self):
         return [s for s in self.samples if sum(s.cost) > 0]
 
-    @property
-    def ready_samples(self):
+    def ready_samples(self, state):
         ready_samples = []
         collected_molecules = copy.deepcopy(self.storage)
-        for s in self.get_sorted_samples():
+        for s in self.get_sorted_samples(state):
             satisfy, collected_molecules = Robot.satisfy(s.cost, collected_molecules, self.expertise)
             if satisfy:
                 ready_samples.append(s)
         return ready_samples
 
     def get_sorted_samples(self, state: State):
-        return self.diagnosed_samples.sort(key=lambda s: utils.sample_sort(s, self, state))
+        return sorted(self.diagnosed_samples, key=lambda s: sample_sort(s, self, state))
 
-    @property
     def missing_molecules(self, state):
         missing_molecules = []
-        for i, sample in zip(range(self.get_sorted_samples(state)), state.get_sorted_samples(state)):
+        for i, sample in zip(range(len(self.get_sorted_samples(state))), self.get_sorted_samples(state)):
             missing_molecules.append(copy.deepcopy(self.storage) if i == 0 else missing_molecules[i - 1])
-            for m_type, cost in zip(range(len(sample.cost)), sample.cost):
-                missing_molecules[i][m_type] -= cost
-                if missing_molecules[i][m_type] < 0:
-                    return MoleculeType(m_type).name
+            missing_molecules[i] = list_difference(missing_molecules[i], sample.cost)
 
-        return None
+        return missing_molecules
 
     @staticmethod
     def satisfy(cost, collected_molecules, expertise):

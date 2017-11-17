@@ -1,7 +1,7 @@
 import copy
 from typing import List
 
-from utils import sample_sort, get_next_molecule
+from utils import sample_sort, get_next_molecule, positive_list_difference
 from data_holder import State, Robot, Location, Action, Move, Sample
 from simulation import simulate_action
 
@@ -21,7 +21,7 @@ def eval_robot(state: State, player: Robot):
 
     sample_scores = [eval_sample(state, player, s) for s in player.samples]
 
-    return eval_score
+    return eval_score + sum(sample_scores)
 
 def eval_sample(state: State, player: Robot, sample: Sample):
     min_score = 1 # rank 1 min score
@@ -31,29 +31,26 @@ def eval_sample(state: State, player: Robot, sample: Sample):
         min_score = 30
 
     # sample is undiagnosed
-    if sum(sample.cost) == 0:
+    if sum(sample.cost) <= 0:
         return 0.15 * (min_score + expertise_weight)
 
     # sample is diagnosed but unknown (simulated)
-    # TODO
+    if sum(sample.cost) <= 0 and sum(sample.cost_tmp) > 0:
+        return 0.175 * (min_score + expertise_weight)
 
     # sample is ready for LABORATORY
-    missing_molecules = get_missing_molecules(sample, player.storage)
+    missing_molecules = positive_list_difference(player.storage, sample.cost)
     if sum(missing_molecules) == 0:
         return 0.85 * (sample.health + expertise_weight)
 
     # missing molecules, but are available
-    missing_molecules = get_missing_molecules(sample, state.available_molecules)
+    missing_molecules = positive_list_difference(state.available_molecules, sample.cost)
     if sum(missing_molecules) == 0:
         return 0.5 * (sample.health + expertise_weight)
 
     # unproducible
     return 0.05 * (sample.health + expertise_weight)
 
-def get_missing_molecules(sample: Sample, container: [int]) -> [int]:
-    difference = list(map(int.__sub__, container, sample.cost))
-    difference = [0 if d < 0 else d for d in difference]
-    return difference
 
 def get_rank(state, player):
     total_ex = sum(player.expertise)
@@ -76,51 +73,56 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
         if len(player.samples) < 3:
             pos_moves.append(Move(Action.CONNECT, get_rank(state, player)))
         else:
-            return pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
+            pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
 
     # Diagnosis Station TODO: check if this rules make sense
     elif player.target == Location.DIAGNOSIS:
         if player.undiagnosed_samples:
-            pos_moves.append(Move(Action.CONNECT, player.undiagnosed_samples[0]))
+            pos_moves.append(Move(Action.CONNECT, player.undiagnosed_samples[0].id))
         elif len(player.diagnosed_samples) >= 3:
             pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
         elif len(player.diagnosed_samples) < 3:
             pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
             # take a sample from the cloud
             if state.cloud_samples:
-                id = state.cloud_samples.sort(key=lambda x: sample_sort(x,player,state))[0].id
+                id = sorted(state.cloud_samples, key=lambda x: sample_sort(x,player,state))[0].id
                 pos_moves.append(Move(Action.CONNECT, id))
 
         # drop worst sample into the cloud
         if player.diagnosed_samples:
-            id = player.get_sorted_samples(state)[-1]
+            id = player.get_sorted_samples(state)[-1].id
             pos_moves.append(Move(Action.CONNECT, id))
 
-        if player.ready_samples:
+        if player.ready_samples(state):
             pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
+
     # Molecules Station
     elif player.target == Location.MOLECULES:
-        missing_molecule = get_next_molecule(player.missing_molecules, state)
+        missing_molecules = player.missing_molecules(state)
+        missing_molecule = get_next_molecule(missing_molecules, state)
+        if player.id == 0:
+            debug(missing_molecules)
+
         if sum(player.storage) < 10 and missing_molecule:
             pos_moves.append(Move(Action.CONNECT, missing_molecule))
         # move to other station
-        if player.ready_samples:
+        if player.ready_samples(state):
             pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
         elif len(player.samples) < 3:
             pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
         else:
             pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
         # just wait
-        if player.score + sum(player.ready_samples, key=lambda s: s.cost) > \
-            state.get_enemy(player).score + sum(state.get_enemy(player).ready_samples, key=lambda s: s.cost):
+        if player.score + sum([s.health for s in player.ready_samples(state)]) > \
+            state.get_enemy(player).score + sum([s.health for s in state.get_enemy(player).ready_samples(state)]):
             pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
 
     elif player.target == Location.LABORATORY:
-        if player.ready_samples:
-            pos_moves.append(Move(Action.CONNECT, player.ready_samples[0]))
+        if player.ready_samples(state):
+            pos_moves.append(Move(Action.CONNECT, player.ready_samples(state)[0].id))
 
-            if player.score + sum(player.ready_samples, key=lambda s: s.cost) > \
-            state.get_enemy(player).score + sum(state.get_enemy(player).ready_samples, key=lambda s: s.cost) and \
+            if player.score + sum([s.health for s in player.ready_samples(state)]) > \
+            state.get_enemy(player).score + sum([s.health for s in state.get_enemy(player).ready_samples(state)]) and \
                     state.get_enemy(player).target != Location.SAMPLES:
                 pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
         else:

@@ -24,12 +24,12 @@ def read_input():
     state = State()
     state.robot_a = Robot(0, *input().split())
     state.robot_b = Robot(1, *input().split())
-    state.available = [int(i) for i in input().split()]
+    state.available_molecules = [int(i) for i in input().split()]
     state.projects = copy.deepcopy(projects)
 
     sample_count = int(input())
     for i in range(sample_count):
-        sample = Sample(*input().split())
+        sample = Sample.from_input(*input().split())
         state.add_sample(sample)
 
     return state
@@ -42,18 +42,18 @@ timer = None
 
 
 def decide_move(state: State):
-    depth = 1
-    while depth <= 401 - turn:
+    depth = 4
+    while depth <= 4:
         best_var_tmp = minimax(state, 0, depth, float('-inf'), float('inf'))
-        if stop_event.is_set(): # to make sure no old threads will post values
-            break
         global best_var
         best_var = best_var_tmp
         depth += 1
+    print_move()
 
 
-def compute(stop_event):
+def compute():
     state = read_input()
+    debug(state)
     decide_move(state)
 
 
@@ -64,19 +64,10 @@ def print_move():
         #You're fucked up. Go home and cry
         print(move_to_string(Move(Action.GOTO, Location.SAMPLES)))
 
-    stop_event.set()
-
 
 turn = 1
 # game loop
 while True:
-    timer = Timer(40 / 1000, print_move)
-    timer.start()  # after 30 seconds, "hello, world" will be printed
 
-    stop_event = Event()
-    compute_thread = Thread(target=compute,  args=(stop_event, ))
-    compute_thread.start()
-
-    while not stop_event.is_set():
-        pass
+    compute()
 
