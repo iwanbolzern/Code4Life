@@ -1,5 +1,7 @@
 from enum import Enum
 
+from src.data_holder import Location
+
 N = 2
 Debug_AI = False
 Timeout = False
