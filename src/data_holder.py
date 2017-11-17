@@ -30,6 +30,18 @@ class Project:
     def __init__(self, expertise):
         self.req_expertise = expertise
 
+
+class SampleTemplate:
+    def __init__(self, cost, health, exp):
+        """ This is for a simulated sample
+        :param cost:
+        :param health:
+        :param exp:
+        """
+        self.cost_tmp = cost
+        self.health = health
+        self.exp = exp
+
 class Sample:
 
     def __init__(self, sample_id, carried_by, rank, expertise_gain, health, cost_a, cost_b, cost_c, cost_d, cost_e):
@@ -38,6 +50,7 @@ class Sample:
         self.rank = int(rank)
         self.health = int(health)
         self.cost = [int(cost_a), int(cost_b), int(cost_c), int(cost_d), int(cost_e)]
+        self.exp = expertise_gain
 
 
 class State:
