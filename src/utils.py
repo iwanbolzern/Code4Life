@@ -8,6 +8,11 @@ def sample_sort(sample: Sample, player, state: State):
 # TODO: implement this rule
 # (MoleculesAvailable & & EnoughSpaceToTake ? 100: MoleculesAvailable? 1: 0)-MissingMolecules * 1e-3:
 
+def list_difference(left: [int], right: [int]) -> [int]:
+    return list(map(int.__sub__, left, right))
+
+def positive_list_difference(left: [int], right: [int]) -> [int]:
+    return [0 if d < 0 else d for d in list_difference(left, right)]
 
 def get_next_molecule(missing_molecules: List[List[int]], state: State):
     for missing_per_sample in missing_molecules:

@@ -1,5 +1,8 @@
 import copy
 from data_holder import State, Move
+from simulation_data import get_sample
+from minimax import get_missing_molecules
+from utils import positive_list_difference
 
 #SAMPLES	DIAGNOSIS	MOLECULES	LABORATORY  Start area
 #SAMPLES	0	3	3	3   2
@@ -7,7 +10,7 @@ from data_holder import State, Move
 #MOLECULES	3	3	0	3   2
 #LABORATORY	3	4	3	0   2
 #Start area	2	2	2	2   0
-from src.data_holder import Robot, Action, Location
+from data_holder import Robot, Action, Location
 
 movement_matrix = [[0,3,3,3,2],
                    [3,0,3,4,2],
@@ -29,98 +32,58 @@ def simulate_player(state: State, player: Robot, move: Move):
         if move.action == Action.GOTO:
             player.eta = movement_matrix[player.target][move.arg]
             player.target = move.arg
-        else:
+
+        elif move.action == Action.CONNECT:
             if player.target == Location.SAMPLES and move.arg in [1,2,3]:
+                sample = get_sample(move.arg)
+                player.samples.append(sample)
 
+            elif player.target == Location.MOLECULES and move.arg in [1,2,3,4,5]:
+                if state.available_molecules[move.arg] <= 0:
+                    raise "Molecule " + move.arg + " not available"
 
-void Simulate(state &S,const array<action,N> &M){
-    const state S_before=S;
-    for(int i=0;i<2;++i){
-        player& p{S.P[i]};
-        const action& mv{M[i]};
-        if(p.eta==0){//Ignore actions of moving players
-            if(mv.type==GOTO){
-                p.eta=Distances[p.r][mv.id];
-                p.r=intToLocation[mv.id];
-            }
-            else{//Connect
-                if(p.r==SAMPLES && ValidRank(mv.id)){//Take undiagnosed sample
-                    const int& rank{mv.id};
-                    S.SamplePool[rank-1].push_back(S.SamplePool[rank-1].front());//Make a copy of the taken sample at the back of the list
-                    sample s=S.SamplePool[rank-1].front();
-                    S.SamplePool[rank-1].pop_front();
-                    s.id=S.SampleCount++;
-                    s.rank=rank;
-                    s.diagnosed=false;
-                    s.owner=i;
-                    p.Samp.push_back(s);
-                }
-                else if(p.r==MOLECULES && ValidMoleculeIndex(mv.id)){//Take molecule
-                    if(S_before.Avail[mv.id]>0 && accumulate(p.Mol.begin(),p.Mol.end(),0)<10){
-                        --S.Avail[mv.id];
-                        ++p.Mol[mv.id];
-                    }
-                }
-                else if(p.r==LABORATORY && find_if(p.Samp.begin(),p.Samp.end(),[&](const sample &s){return s.id==mv.id;})!=p.Samp.end()){
-                    const auto s=find_if(p.Samp.begin(),p.Samp.end(),[&](const sample &s){return s.id==mv.id;});
-                    if(ReadyToProduce(p,*s)){
-                        for(int m=0;m<5;++m){
-                            const int spent{max(0,s->Cost[m]-p.Exp[m])};
-                            p.Mol[m]-=spent;
-                            S.Avail[m]+=spent;
-                        }
-                        p.score+=s->score;//Increase score
-                        ++p.Exp[s->exp];//Gain expertise
-                        p.Samp.erase(s);
-                    }
-                    else{
-                        cerr << i << " tried to produce something he can't" << endl;
-                    }
-                }
-                else if(p.r==DIAGNOSIS){
-                    const auto player_s{find_if(p.Samp.begin(),p.Samp.end(),[&](const sample &s){return s.id==mv.id;})};
-                    const auto diag_s{find_if(S.Samp.begin(),S.Samp.end(),[&](const sample &s){return s.id==mv.id;})};
-                    if(player_s!=p.Samp.end()){
-                        if(player_s->diagnosed){
-                            S.Samp.push_back(*player_s);
-                            p.Samp.erase(player_s);
-                        }
-                        else{
-                            player_s->diagnosed=true;
-                        }
-                    }
-                    else if(diag_s!=S.Samp.end()){
-                        const action mv2{M[(i+1)%2]};
-                        const player& p2{S.P[(i+1)%2]};
-                        const bool other_hasnt_requested{mv.id!=mv2.id || mv.type!=mv2.type || p2.r!=DIAGNOSIS || p2.eta>0 || p2.Samp.size()==3};
-                        if(p.Samp.size()<3 && (diag_s->owner==i || other_hasnt_requested) ){
-                            //cerr << "Player " << i << " got sample " << mv.id << endl;
-                            p.Samp.push_back(*diag_s);
-                            S.Samp.erase(diag_s);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    for(int i=0;i<2;++i){//Decrease eta of both players
-        player& p{S.P[i]};
-        p.eta=max(0,p.eta-1);
-    }
-    for(auto it=S.Proj.begin();it!=S.Proj.end();){
-        bool completed{false};
-        for(int i=0;i<2;++i){
-            if(Completed_Project(S.P[i],*it)){
-                //cerr << "Player " << i << " completed a project" << endl;
-                S.P[i].score+=50;
-                completed=true;
-            }
-        }
-        if(completed){
-            it=S.Proj.erase(it);
-        }
-        else{
-            ++it;
-        }
-    }
-}
+                state.available_molecules[move.arg] -= 1
+                player.storage[move.arg] += 1
+
+            elif player.target == Location.LABORATORY:
+                samples = list(filter(lambda s: s.id == move.arg, player.samples))
+                if len(samples) == 0:
+                    raise "Invalid sample " +  move.arg
+
+                sample = samples[0]
+                difference = get_missing_molecules(sample, player.storage)
+                if sum(difference) > 0:
+                    raise "Molecules not available for " + move.arg
+
+                player.storage = list(map(int.__sub__, player.storage, sample.cost))
+                player.score += sample.score
+                player.expertise[sample.expertise] += 1
+                player.samples.remove(sample)
+
+            elif player.target == Location.DIAGNOSIS:
+                player_samples = list(filter(lambda s: s.id == move.arg, player.samples))
+                cloud_samples = list(filter(lambda s: s.id == move.arg, state.cloud_samples))
+                if len(player_samples) == 1:
+                    sample = player_samples[0]
+                    if sample.diagnosed:
+                        player.samples.remove(sample)
+                        state.cloud_samples.append(sample)
+                    else:
+                        sample.diagnosed = True
+
+                elif len(cloud_samples) == 1:
+                    sample = cloud_samples[0]
+                    if len(player.samples) < 3:
+                        state.cloud_samples.remove(sample)
+                        player.samples.append(sample)
+
+                if len(player_samples) == 0 or len(cloud_samples) == 0:
+                    raise "Invalid sample " + move.arg
+
+    player.eta = max(0, player.eta - 1)
+    for project in state.projects:
+        if not project.completed:
+            difference = positive_list_difference(player.expertise, project.req_expertise)
+            if sum(difference) == 0:
+                player.score += 50
+                project.completed = True

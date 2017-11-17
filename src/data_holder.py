@@ -60,7 +60,7 @@ class State:
         self.robot_b = None
         self.available_molecules = None #[#a, #b...]
         self.cloud_samples = []
-        self.projects = None
+        self.projects = []
 
     def add_sample(self, s):
         if s.carried_by == -1:
