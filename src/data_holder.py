@@ -92,8 +92,8 @@ class Robot:
     def __init__(self, id, target, eta, score, storage_a, storage_b, storage_c, storage_d, storage_e, expertise_a, expertise_b, expertise_c, expertise_d, expertise_e):
         self.id = id
         self.target = Location[target] #module where the player is
-        self.eta = eta
-        self.score = score
+        self.eta = int(eta)
+        self.score = int(score)
         self.storage = [int(storage_a), int(storage_b), int(storage_c), int(storage_d), int(storage_e)]
         self.expertise = [int(expertise_a), int(expertise_b), int(expertise_c), int(expertise_d), int(expertise_e)]
         self.samples = []

@@ -8,7 +8,7 @@ from simulation import simulate_action
 expertise_weight = 10
 
 class Variation:
-    def __init(self, score, moves):
+    def __init__(self, score, moves):
         self.score = score
         self.moves = moves
 
@@ -17,7 +17,7 @@ def eval(state: State):
 
 def eval_robot(state: State, player: Robot):
     eval_score = player.score
-    eval_score += sum(expertise_weight * player.expertise)
+    eval_score += expertise_weight * sum(player.expertise)
 
     sample_scores = [eval_sample(state, player, s) for s in player.samples]
 
@@ -149,7 +149,7 @@ def minimax(state, depth, max_depth, alpha, beta) -> Variation:
             tmp_state = copy.deepcopy(state)
             simulate_action(tmp_state, my_action, en_action)
             local_variation = minimax(tmp_state, depth+1, max_depth, alpha, local_beta)
-            if local_variation.score < best_variation2:
+            if local_variation.score < best_variation2.score:
                 best_variation2 = local_variation
                 best_variation2.moves = [[my_action, en_action]] + best_variation2.moves
             local_beta = min(local_variation.score, local_beta)

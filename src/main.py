@@ -52,17 +52,17 @@ def decide_move(state: State):
         depth += 1
 
 
-def compute():
+def compute(stop_event):
     state = read_input()
     decide_move(state)
 
 
 def print_move():
     if best_var:
-        print(utils.move_to_string(best_var.moves[0]))
+        print(move_to_string(best_var.moves[0][0]))
     else:
         #You're fucked up. Go home and cry
-        print(utils.move_to_string(Move(Action.GOTO, Location.SAMPLES)))
+        print(move_to_string(Move(Action.GOTO, Location.SAMPLES)))
 
     stop_event.set()
 
@@ -76,4 +76,7 @@ while True:
     stop_event = Event()
     compute_thread = Thread(target=compute,  args=(stop_event, ))
     compute_thread.start()
+
+    while not stop_event.is_set():
+        pass
 
