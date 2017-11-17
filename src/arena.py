@@ -1,4 +1,8 @@
+import signal
 from enum import Enum
+
+import os
+from subprocess import Popen, PIPE
 
 from src.data_holder import Location
 
@@ -86,94 +90,26 @@ inline string EmptyPipe(const int fd){
     return out;
 }
 
-struct AI{
-    int id,pid,outPipe,errPipe,inPipe,turnOfDeath;
-    string name;
-    inline void stop(const int turn=-1){
-        if(alive()){
-            kill(pid,SIGTERM);
-            int status;
-            waitpid(pid,&status,0);//It is necessary to read the exit code for the process to stop
-            if(!WIFEXITED(status)){//If not exited normally try to "kill -9" the process
-                kill(pid,SIGKILL);
-            }
-            turnOfDeath=turn;
-        }
-    }
-    inline bool alive()const{
-        return kill(pid,0)!=-1;//Check if process is still running
-    }
-    inline void Feed_Inputs(const string &inputs){
-        if(write(inPipe,&inputs[0],inputs.size())!=inputs.size()){
-            throw(5);
-        }
-    }
-    inline ~AI(){
-        close(errPipe);
-        close(outPipe);
-        close(inPipe);
-        stop();
-    }
-};
+class AI:
 
-void StartProcess(AI &Bot){
-    int StdinPipe[2];
-    int StdoutPipe[2];
-    int StderrPipe[2];
-    if(pipe(StdinPipe)<0){
-        perror("allocating pipe for child input redirect");
-    }
-    if(pipe(StdoutPipe)<0){
-        close(StdinPipe[PIPE_READ]);
-        close(StdinPipe[PIPE_WRITE]);
-        perror("allocating pipe for child output redirect");
-    }
-    if(pipe(StderrPipe)<0){
-        close(StderrPipe[PIPE_READ]);
-        close(StderrPipe[PIPE_WRITE]);
-        perror("allocating pipe for child stderr redirect failed");
-    }
-    int nchild{fork()};
-    if(nchild==0){//Child process
-        if(dup2(StdinPipe[PIPE_READ],STDIN_FILENO)==-1){// redirect stdin
-            perror("redirecting stdin");
-            return;
-        }
-        if(dup2(StdoutPipe[PIPE_WRITE],STDOUT_FILENO)==-1){// redirect stdout
-            perror("redirecting stdout");
-            return;
-        }
-        if(dup2(StderrPipe[PIPE_WRITE],STDERR_FILENO)==-1){// redirect stderr
-            perror("redirecting stderr");
-            return;
-        }
-        close(StdinPipe[PIPE_READ]);
-        close(StdinPipe[PIPE_WRITE]);
-        close(StdoutPipe[PIPE_READ]);
-        close(StdoutPipe[PIPE_WRITE]);
-        close(StderrPipe[PIPE_READ]);
-        close(StderrPipe[PIPE_WRITE]);
-        execl(Bot.name.c_str(),Bot.name.c_str(),(char*)NULL);//(char*)Null is really important
-        //If you get past the previous line its an error
-        perror("exec of the child process");
-    }
-    else if(nchild>0){//Parent process
-        close(StdinPipe[PIPE_READ]);//Parent does not read from stdin of child
-        close(StdoutPipe[PIPE_WRITE]);//Parent does not write to stdout of child
-        close(StderrPipe[PIPE_WRITE]);//Parent does not write to stderr of child
-        Bot.inPipe=StdinPipe[PIPE_WRITE];
-        Bot.outPipe=StdoutPipe[PIPE_READ];
-        Bot.errPipe=StderrPipe[PIPE_READ];
-        Bot.pid=nchild;
-    }
-    else{//failed to create child
-        close(StdinPipe[PIPE_READ]);
-        close(StdinPipe[PIPE_WRITE]);
-        close(StdoutPipe[PIPE_READ]);
-        close(StdoutPipe[PIPE_WRITE]);
-        perror("Failed to create child process");
-    }
-}
+    def __init__(self, process):
+        self.process = None
+
+    def stop(self):
+        os.kill(self.pid, signal.SIGKILL)
+
+    def feed_input(self, input):
+        stdout_data = self.process.communicate(input=input)[0]
+
+
+def start_process(start_cmd):
+    p = Popen([start_cmd], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+    ai = AI(p)
+    return ai
+
+def get_move
+
+
 
 inline bool IsValidMove(const state &S,const AI &Bot,const string &M){
     return count(M.begin(),M.end(),'\n')==1;
@@ -282,97 +218,7 @@ bool Completed_Project(const player &p,const project &proj){
     return true;
 }
 
-void Simulate(state &S,const array<action,N> &M){
-    const state S_before=S;
-    for(int i=0;i<2;++i){
-        player& p{S.P[i]};
-        const action& mv{M[i]};
-        if(p.eta==0){//Ignore actions of moving players
-            if(mv.type==GOTO){
-                p.eta=Distances[p.r][mv.id];
-                p.r=intToLocation[mv.id];
-            }
-            else{//Connect
-                if(p.r==SAMPLES && ValidRank(mv.id)){//Take undiagnosed sample
-                    const int& rank{mv.id};
-                    S.SamplePool[rank-1].push_back(S.SamplePool[rank-1].front());//Make a copy of the taken sample at the back of the list
-                    sample s=S.SamplePool[rank-1].front();
-                    S.SamplePool[rank-1].pop_front();
-                    s.id=S.SampleCount++;
-                    s.rank=rank;
-                    s.diagnosed=false;
-                    s.owner=i;
-                    p.Samp.push_back(s);
-                }
-                else if(p.r==MOLECULES && ValidMoleculeIndex(mv.id)){//Take molecule
-                    if(S_before.Avail[mv.id]>0 && accumulate(p.Mol.begin(),p.Mol.end(),0)<10){
-                        --S.Avail[mv.id];
-                        ++p.Mol[mv.id];
-                    }
-                }
-                else if(p.r==LABORATORY && find_if(p.Samp.begin(),p.Samp.end(),[&](const sample &s){return s.id==mv.id;})!=p.Samp.end()){
-                    const auto s=find_if(p.Samp.begin(),p.Samp.end(),[&](const sample &s){return s.id==mv.id;});
-                    if(ReadyToProduce(p,*s)){
-                        for(int m=0;m<5;++m){
-                            const int spent{max(0,s->Cost[m]-p.Exp[m])};
-                            p.Mol[m]-=spent;
-                            S.Avail[m]+=spent;
-                        }
-                        p.score+=s->score;//Increase score
-                        ++p.Exp[s->exp];//Gain expertise
-                        p.Samp.erase(s);
-                    }
-                    else{
-                        cerr << i << " tried to produce something he can't" << endl;
-                    }
-                }
-                else if(p.r==DIAGNOSIS){
-                    const auto player_s{find_if(p.Samp.begin(),p.Samp.end(),[&](const sample &s){return s.id==mv.id;})};
-                    const auto diag_s{find_if(S.Samp.begin(),S.Samp.end(),[&](const sample &s){return s.id==mv.id;})};
-                    if(player_s!=p.Samp.end()){
-                        if(player_s->diagnosed){
-                            S.Samp.push_back(*player_s);
-                            p.Samp.erase(player_s);
-                        }
-                        else{
-                            player_s->diagnosed=true;
-                        }
-                    }
-                    else if(diag_s!=S.Samp.end()){
-                        const action mv2{M[(i+1)%2]};
-                        const player& p2{S.P[(i+1)%2]};
-                        const bool other_hasnt_requested{mv.id!=mv2.id || mv.type!=mv2.type || p2.r!=DIAGNOSIS || p2.eta>0 || p2.Samp.size()==3};
-                        if(p.Samp.size()<3 && (diag_s->owner==i || other_hasnt_requested) ){
-                            //cerr << "Player " << i << " got sample " << mv.id << endl;
-                            p.Samp.push_back(*diag_s);
-                            S.Samp.erase(diag_s);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    for(int i=0;i<2;++i){//Decrease eta of both players
-        player& p{S.P[i]};
-        p.eta=max(0,p.eta-1);
-    }
-    for(auto it=S.Proj.begin();it!=S.Proj.end();){
-        bool completed{false};
-        for(int i=0;i<2;++i){
-            if(Completed_Project(S.P[i],*it)){
-                //cerr << "Player " << i << " completed a project" << endl;
-                S.P[i].score+=50;
-                completed=true;
-            }
-        }
-        if(completed){
-            it=S.Proj.erase(it);
-        }
-        else{
-            ++it;
-        }
-    }
-}
+def play_game()
 
 int Play_Game(const array<string,N> &Bot_Names,state &S){
     array<AI,N> Bot;

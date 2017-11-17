@@ -36,7 +36,8 @@ def simulate_player(state: State, player: Robot, move: Move):
         elif move.action == Action.CONNECT:
             if player.target == Location.SAMPLES and move.arg in [1,2,3]:
                 sample = get_sample(move.arg)
-                player.samples.append(sample)
+                sample.carried_by = player.id
+                state.add_sample(sample)
 
             elif player.target == Location.MOLECULES and move.arg in [1,2,3,4,5]:
                 if state.available_molecules[move.arg] <= 0:
@@ -58,7 +59,7 @@ def simulate_player(state: State, player: Robot, move: Move):
                 player.storage = list(map(int.__sub__, player.storage, sample.cost))
                 player.score += sample.score
                 player.expertise[sample.expertise] += 1
-                player.samples.remove(sample)
+                state.remove_sample(sample)
 
             elif player.target == Location.DIAGNOSIS:
                 player_samples = list(filter(lambda s: s.id == move.arg, player.samples))
@@ -66,16 +67,18 @@ def simulate_player(state: State, player: Robot, move: Move):
                 if len(player_samples) == 1:
                     sample = player_samples[0]
                     if sample.diagnosed:
-                        player.samples.remove(sample)
-                        state.cloud_samples.append(sample)
+                        state.remove_sample(sample)
+                        sample.carried_by = -1
+                        state.add_sample(sample)
                     else:
-                        sample.diagnosed = True
+                        sample.cost = sample.cost_tmp
 
                 elif len(cloud_samples) == 1:
                     sample = cloud_samples[0]
                     if len(player.samples) < 3:
-                        state.cloud_samples.remove(sample)
-                        player.samples.append(sample)
+                        state.remove_sample(sample)
+                        sample.carried_by = player.id
+                        state.add_sample(sample)
 
                 if len(player_samples) == 0 or len(cloud_samples) == 0:
                     raise "Invalid sample " + move.arg

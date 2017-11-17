@@ -1,6 +1,9 @@
 import copy
 from enum import Enum
 
+from src.arena import Sample
+
+
 class Action(Enum):
     GOTO = 0
     CONNECT = 1
@@ -31,17 +34,6 @@ class Project:
         self.req_expertise = expertise
 
 
-class SampleTemplate:
-    def __init__(self, cost, health, exp):
-        """ This is for a simulated sample
-        :param cost:
-        :param health:
-        :param exp:
-        """
-        self.cost_tmp = cost
-        self.health = health
-        self.exp = exp
-
 class Sample:
 
     def __init__(self, sample_id, carried_by, rank, expertise_gain, health, cost_a, cost_b, cost_c, cost_d, cost_e):
@@ -51,6 +43,20 @@ class Sample:
         self.health = int(health)
         self.cost = [int(cost_a), int(cost_b), int(cost_c), int(cost_d), int(cost_e)]
         self.exp = expertise_gain
+
+    def __init__(self, cost, health, exp):
+        """ This is for a simulated sample
+        :param cost:
+        :param health:
+        :param exp:
+        """
+        self.health = health
+        self.exp = exp
+        self.cost_tmp = cost
+
+    @property
+    def diagnosed(self):
+        return sum(self.cost) > 0
 
 
 class State:
@@ -70,12 +76,21 @@ class State:
         else:
             self.robot_b.samples.append(s)
 
+    def remove_sample(self, s):
+        if s.carried_by == -1:
+            self.cloud_samples.remove(s)
+        elif s.carried_by == 0:
+            self.robot_a.samples.remove(s)
+        else:
+            self.robot_b.samples.remove(s)
+
     def get_enemy(self, robot):
         return self.robot_a if robot == self.robot_b else self.robot_b
 
 class Robot:
 
-    def __init__(self, target, eta, score, storage_a, storage_b, storage_c, storage_d, storage_e, expertise_a, expertise_b, expertise_c, expertise_d, expertise_e):
+    def __init__(self, id, target, eta, score, storage_a, storage_b, storage_c, storage_d, storage_e, expertise_a, expertise_b, expertise_c, expertise_d, expertise_e):
+        self.id = id
         self.target = Location[target] #module where the player is
         self.eta = eta
         self.score = score

@@ -22,8 +22,8 @@ for i in range(project_count):
 
 def read_input():
     state = State()
-    state.robot_a = Robot(*input().split())
-    state.robot_b = Robot(*input().split())
+    state.robot_a = Robot(0, *input().split())
+    state.robot_b = Robot(1, *input().split())
     state.available = [int(i) for i in input().split()]
     state.projects = copy.deepcopy(projects)
 
