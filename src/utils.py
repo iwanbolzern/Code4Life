@@ -15,7 +15,7 @@ def positive_list_difference(left: List[int], right: List[int]) -> List[int]:
 
 def get_next_molecule(missing_molecules, state):
     for missing_per_sample in missing_molecules:
-        for type, missing_count in zip(range(len(missing_per_sample)), missing_per_sample):
+        for type, missing_count in enumerate(missing_per_sample):
             if missing_count < 0 and state.available_molecules[type] > 0:
                 return MoleculeType(type)
     return None

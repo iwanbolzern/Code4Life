@@ -1,5 +1,6 @@
 import copy
 import sys
+import time
 from threading import Timer, Thread, Event
 
 from minimax import Variation, minimax
@@ -42,8 +43,8 @@ timer = None
 
 
 def decide_move(state: State):
-    depth = 4
-    while depth <= 4:
+    depth = 6
+    while depth <= 6:
         best_var_tmp = minimax(state, 0, depth, float('-inf'), float('inf'))
         global best_var
         best_var = best_var_tmp
@@ -68,6 +69,6 @@ def print_move():
 turn = 1
 # game loop
 while True:
-
+    s = time.time()
     compute()
-
+    print(time.time() - s, file=sys.stderr)

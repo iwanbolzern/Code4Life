@@ -144,11 +144,11 @@ def minimax(state, depth, max_depth, alpha, beta) -> Variation:
     enemy_branch = possible_moves(state, state.robot_b)
 
     best_variation = Variation(float('-inf'), []) #float just bc there is no int('-inf')
+    tmp_state = copy.deepcopy(state)
     for my_action in my_branch:
         best_variation2 = Variation(float('inf'), [])
         local_beta = beta
         for en_action in enemy_branch:
-            tmp_state = copy.deepcopy(state)
             simulate_action(tmp_state, my_action, en_action)
             local_variation = minimax(tmp_state, depth+1, max_depth, alpha, local_beta)
             if local_variation.score < best_variation2.score:

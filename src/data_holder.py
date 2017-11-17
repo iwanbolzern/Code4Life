@@ -123,8 +123,10 @@ class Robot:
 
     def missing_molecules(self, state):
         missing_molecules = []
-        for i, sample in zip(range(len(self.get_sorted_samples(state))), self.get_sorted_samples(state)):
-            missing_molecules.append(copy.deepcopy(self.storage) if i == 0 else missing_molecules[i - 1])
+        storage = copy.deepcopy(self.storage)
+        sorted_samples = self.get_sorted_samples(state)
+        for i, sample in enumerate(sorted_samples):
+            missing_molecules.append(storage if i == 0 else missing_molecules[i - 1])
             missing_molecules[i] = list_difference(missing_molecules[i], sample.cost)
 
         return missing_molecules
