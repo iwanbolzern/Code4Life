@@ -19,7 +19,7 @@ def eval_robot(state: State, player: Robot):
     eval_score = player.score
     eval_score += expertise_weight * sum(player.expertise)
 
-    sample_scores = [eval_sample(state, player, s) for s in player.samples]
+    sample_scores = (eval_sample(state, player, s) for s in player.samples)
 
     return eval_score + sum(sample_scores)
 
@@ -31,21 +31,24 @@ def eval_sample(state: State, player: Robot, sample: Sample):
         min_score = 30
 
     # sample is undiagnosed
-    if sum(sample.cost) <= 0:
+    sample_cost = sum(sample.cost)
+    if sample_cost <= 0:
         return 0.15 * (min_score + expertise_weight)
 
     # sample is diagnosed but unknown (simulated)
-    if sum(sample.cost) <= 0 and sum(sample.cost_tmp) > 0:
+    if sample_cost <= 0 and sum(sample.cost_tmp) > 0:
         return 0.175 * (min_score + expertise_weight)
 
     # sample is ready for LABORATORY
     missing_molecules = positive_list_difference(player.storage, sample.cost)
-    if sum(missing_molecules) == 0:
+    missing_molecules_sum = sum(missing_molecules)
+    if missing_molecules_sum == 0:
         return 0.85 * (sample.health + expertise_weight)
 
     # missing molecules, but are available
     missing_molecules = positive_list_difference(state.available_molecules, sample.cost)
-    if sum(missing_molecules) == 0:
+    missing_molecules_sum = sum(missing_molecules)
+    if missing_molecules_sum == 0:
         return 0.5 * (sample.health + expertise_weight)
 
     # unproducible
@@ -77,11 +80,13 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
 
     # Diagnosis Station TODO: check if this rules make sense
     elif player.target == Location.DIAGNOSIS:
-        if player.undiagnosed_samples:
-            pos_moves.append(Move(Action.CONNECT, player.undiagnosed_samples[0].id))
-        elif len(player.diagnosed_samples) >= 3:
+        undiagnosed_samples = player.undiagnosed_samples
+        diagnosed_samples = player.diagnosed_samples
+        if undiagnosed_samples:
+            pos_moves.append(Move(Action.CONNECT, undiagnosed_samples[0].id))
+        elif len(diagnosed_samples) >= 3:
             pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
-        elif len(player.diagnosed_samples) < 3:
+        elif len(diagnosed_samples) < 3:
             pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
             # take a sample from the cloud
             if state.cloud_samples:
@@ -89,7 +94,7 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
                 pos_moves.append(Move(Action.CONNECT, id))
 
         # drop worst sample into the cloud
-        if player.diagnosed_samples:
+        if diagnosed_samples:
             id = player.get_sorted_samples(state)[-1].id
             pos_moves.append(Move(Action.CONNECT, id))
 
@@ -106,23 +111,25 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
         if sum(player.storage) < 10 and missing_molecule:
             pos_moves.append(Move(Action.CONNECT, missing_molecule))
         # move to other station
-        if player.ready_samples(state):
+        ready_samples = player.ready_samples(state)
+        if ready_samples:
             pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
         elif len(player.samples) < 3:
             pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
         else:
             pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
         # just wait
-        if player.score + sum([s.health for s in player.ready_samples(state)]) > \
-            state.get_enemy(player).score + sum([s.health for s in state.get_enemy(player).ready_samples(state)]):
+        if player.score + sum(s.health for s in ready_samples) > \
+            state.get_enemy(player).score + sum(s.health for s in state.get_enemy(player).ready_samples(state)):
             pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
 
     elif player.target == Location.LABORATORY:
-        if player.ready_samples(state):
-            pos_moves.append(Move(Action.CONNECT, player.ready_samples(state)[0].id))
+        ready_samples = player.ready_samples(state)
+        if ready_samples:
+            pos_moves.append(Move(Action.CONNECT, ready_samples[0].id))
 
-            if player.score + sum([s.health for s in player.ready_samples(state)]) > \
-            state.get_enemy(player).score + sum([s.health for s in state.get_enemy(player).ready_samples(state)]) and \
+            if player.score + sum(s.health for s in ready_samples) > \
+            state.get_enemy(player).score + sum(s.health for s in state.get_enemy(player).ready_samples(state)) and \
                     state.get_enemy(player).target != Location.SAMPLES:
                 pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
         else:

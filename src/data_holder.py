@@ -119,7 +119,8 @@ class Robot:
         return ready_samples
 
     def get_sorted_samples(self, state: State):
-        return sorted(self.diagnosed_samples, key=lambda s: sample_sort(s, self, state))
+        diagnosed_samples_gen = (s for s in self.samples if sum(s.cost) > 0)
+        return sorted(diagnosed_samples_gen, key=lambda s: sample_sort(s, self, state))
 
     def missing_molecules(self, state):
         missing_molecules = []
@@ -127,15 +128,14 @@ class Robot:
         sorted_samples = self.get_sorted_samples(state)
         for i, sample in enumerate(sorted_samples):
             missing_molecules.append(storage if i == 0 else missing_molecules[i - 1])
-            missing_molecules[i] = list_difference(missing_molecules[i], sample.cost)
+            missing_molecules[i] = list(list_difference(missing_molecules[i], sample.cost))
 
         return missing_molecules
 
     @staticmethod
     def satisfy(cost, collected_molecules, expertise):
-        for m_type, cost in zip(range(len(cost)), cost):
-            collected_molecules[m_type] -= (cost-expertise[m_type])
+        for m_type, cost in enumerate(cost):
+            collected_molecules[m_type] -= (cost - expertise[m_type])
             if collected_molecules[m_type] < 0:
                 return False, collected_molecules
         return True, collected_molecules
-
