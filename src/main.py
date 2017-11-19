@@ -4,7 +4,7 @@ from threading import Timer, Thread, Event
 import time
 from datetime import datetime
 
-from minimax import Variation, minimax, possible_moves
+from minimax import Variation, minimax, possible_move
 from utils import move_to_string
 from data_holder import State, Robot, Sample, Project, Location, Action, Move
 
@@ -74,7 +74,7 @@ def read_input():
     return state
 
 
-best_move: Variation = None
+best_move: Move = None
 compute_thread = None
 stop_event = None
 timer = None
@@ -88,7 +88,7 @@ def decide_move(state: State):
     #     best_var = best_var_tmp
     #     depth += 1
     global best_move
-    best_move = possible_moves(state, state.robot_a)
+    best_move = possible_move(state, state.robot_a)
     print_move()
 
 
@@ -100,7 +100,7 @@ def compute():
 
 def print_move():
     if best_move:
-        print(move_to_string(best_move[0]))
+        print(move_to_string(best_move))
     else:
         #You're fucked up. Go home and cry
         print(move_to_string(Move(Action.GOTO, Location.SAMPLES)))

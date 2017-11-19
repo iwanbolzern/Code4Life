@@ -105,101 +105,99 @@ def not_usefull_samples_in_hand(player, state):
     return samples
 
 
-def possible_moves(state: State, player: Robot) -> List[Move]:
-    pos_moves = []
+def possible_move(state: State, player: Robot) -> Move:
     # start position
     if player.target == Location.START_POS:
-        pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
+        return Move(Action.GOTO, Location.SAMPLES)
 
     # Sample position
     elif player.target == Location.SAMPLES:
         if len(player.samples) < 3:
-            pos_moves.append(Move(Action.CONNECT, get_rank(state, player)))
-        else:
-            prod_samples_in_hand = not_usefull_samples_in_hand(player, state)
-            if len([s for s in prod_samples_in_hand if s.rank == 1]) > 1 \
-                    or [s for s in prod_samples_in_hand if s.rank > 1]:
-                pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+            return Move(Action.CONNECT, get_rank(state, player))
 
-            if not pos_moves:
-                pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
+        prod_samples_in_hand = not_usefull_samples_in_hand(player, state)
+        if len([s for s in prod_samples_in_hand if s.rank == 1]) > 1 \
+                or [s for s in prod_samples_in_hand if s.rank > 1]:
+            return Move(Action.GOTO, Location.MOLECULES)
+
+        return Move(Action.GOTO, Location.DIAGNOSIS)
 
     # Diagnosis Station TODO: check if this rules make sense
     elif player.target == Location.DIAGNOSIS:
         undiagnosed_samples = player.undiagnosed_samples
         diagnosed_samples = player.diagnosed_samples
         if undiagnosed_samples:
-            pos_moves.append(Move(Action.CONNECT, undiagnosed_samples[0].id))
-        else:
-            if len([s for s in player.ready_samples(state) if s.rank == 1]) >= 2 or [s for s in player.ready_samples(state) if s.rank > 1]:
-                pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
-            else:
-                producible_in_cloud = producible_cloud_samples(player, state)
-                producible_in_hand = producible_samples_in_hand(player, state)
-                not_usefulle_samples = not_usefull_samples_in_hand(player, state)
-                if not_usefulle_samples:
-                    pos_moves.append(Move(Action.CONNECT, not_usefulle_samples[0].id))
-                elif producible_in_cloud and len(player.samples) >= 3:
-                    id = player.get_sorted_samples(state)[-1].id
-                    pos_moves.append(Move(Action.CONNECT, id))
-                elif producible_in_cloud:
-                    pos_moves.append(Move(Action.CONNECT, producible_in_cloud[0].id))
-                elif producible_in_hand and player.prev_location != Location.MOLECULES:
-                    pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
-                elif len(diagnosed_samples) < 3:
-                    pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
-                else:
-                    # drop worst sample into the cloud
-                    # if len(diagnosed_samples) >= 3 and not producible and not producible_in_hand:
-                    id = player.get_sorted_samples(state)[-1].id
-                    pos_moves.append(Move(Action.CONNECT, id))
+            return Move(Action.CONNECT, undiagnosed_samples[0].id)
+
+        if len([s for s in player.ready_samples(state) if s.rank == 1]) >= 2 or [s for s in player.ready_samples(state) if s.rank > 1]:
+            return Move(Action.GOTO, Location.LABORATORY)
+
+        producible_in_cloud = producible_cloud_samples(player, state)
+        producible_in_hand = producible_samples_in_hand(player, state)
+        not_usefulle_samples = not_usefull_samples_in_hand(player, state)
+        if not_usefulle_samples:
+            return Move(Action.CONNECT, not_usefulle_samples[0].id)
+
+        if producible_in_cloud and len(player.samples) >= 3:
+            id = player.get_sorted_samples(state)[-1].id
+            return Move(Action.CONNECT, id)
+
+        if producible_in_cloud:
+            return Move(Action.CONNECT, producible_in_cloud[0].id)
+
+        if producible_in_hand and player.prev_location != Location.MOLECULES:
+            return Move(Action.GOTO, Location.MOLECULES)
+
+        if len(diagnosed_samples) < 3:
+            return Move(Action.GOTO, Location.SAMPLES)
+
+        # drop worst sample into the cloud
+        # if len(diagnosed_samples) >= 3 and not producible and not producible_in_hand:
+        id = player.get_sorted_samples(state)[-1].id
+        return Move(Action.CONNECT, id)
 
     # Molecules Station
     elif player.target == Location.MOLECULES:
         missing_molecules = player.missing_molecules(state)
         missing_molecule = get_next_molecule(missing_molecules, state)
-        if player.id == 0:
-            pass#debug(missing_molecules)
 
         if sum(player.storage) < 10 and missing_molecule:
-            pos_moves.append(Move(Action.CONNECT, missing_molecule))
-        else:
-            # move to other station
-            ready_samples = player.ready_samples(state)
-            if ready_samples:
-                pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
-            else:
-                if producible_cloud_samples(player, state) or len(player.samples) >= 3:
-                    pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
+            return Move(Action.CONNECT, missing_molecule)
 
-                if not pos_moves:
-                    pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
+        # move to other station
+        ready_samples = player.ready_samples(state)
+        if ready_samples:
+            return Move(Action.GOTO, Location.LABORATORY)
 
-            # just wait
-            # if player.score + sum(s.health for s in ready_samples) > \
-            #     state.get_enemy(player).score + sum(s.health for s in state.get_enemy(player).ready_samples(state)):
-            #     pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+        if producible_cloud_samples(player, state) or len(player.samples) >= 3:
+            return Move(Action.GOTO, Location.DIAGNOSIS)
+
+        return Move(Action.GOTO, Location.SAMPLES)
+
+        # just wait
+        # if player.score + sum(s.health for s in ready_samples) > \
+        #     state.get_enemy(player).score + sum(s.health for s in state.get_enemy(player).ready_samples(state)):
+        #     return Move(Action.GOTO, Location.MOLECULES)
 
     elif player.target == Location.LABORATORY:
         ready_samples = player.ready_samples(state)
         if ready_samples:
-            pos_moves.append(Move(Action.CONNECT, ready_samples[0].id))
+            return Move(Action.CONNECT, ready_samples[0].id)
 
             # if player.score + sum(s.health for s in ready_samples) > \
             # state.get_enemy(player).score + sum(s.health for s in state.get_enemy(player).ready_samples(state)) and \
             #         state.get_enemy(player).target != Location.SAMPLES:
-            #     pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
-        else:
-            # if len([s for s in producible_samples_in_hand(player, state) if s.rank == 1]) >= 2 \
-                    # or [s for s in producible_samples_in_hand(player, state) if s.rank > 1] :
-                # pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
-            if producible_cloud_samples(player, state):
-                pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
+            #     return Move(Action.GOTO, Location.LABORATORY)
 
-            if not pos_moves:
-                pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
+        # if len([s for s in producible_samples_in_hand(player, state) if s.rank == 1]) >= 2 \
+        #         or [s for s in producible_samples_in_hand(player, state) if s.rank > 1] :
+        #     return Move(Action.GOTO, Location.MOLECULES)
+        if producible_cloud_samples(player, state):
+            return Move(Action.GOTO, Location.DIAGNOSIS)
 
-    return pos_moves
+        return Move(Action.GOTO, Location.SAMPLES)
+
+    return Move(Action.GOTO, Location.SAMPLES)
 
 def minimax(state, depth, max_depth, alpha, beta) -> Variation:
     if depth == max_depth:
