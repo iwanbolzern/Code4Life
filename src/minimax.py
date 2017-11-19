@@ -143,6 +143,9 @@ def possible_move(state: State, player: Robot) -> Move:
         producible_in_hand = producible_samples_in_hand(player, state)
         not_useful_samples = not_useful_samples_in_hand(player, state)
 
+        if producible_in_hand and player.prev_location != Location.MOLECULES:
+            return Move(Action.GOTO, Location.MOLECULES)
+
         if not_useful_samples:
             return Move(Action.CONNECT, not_useful_samples[0].id)
 
@@ -152,9 +155,6 @@ def possible_move(state: State, player: Robot) -> Move:
 
         if producible_in_cloud:
             return Move(Action.CONNECT, producible_in_cloud[0].id)
-
-        if producible_in_hand and player.prev_location != Location.MOLECULES:
-            return Move(Action.GOTO, Location.MOLECULES)
 
         if len(diagnosed_samples) < 3:
             return Move(Action.GOTO, Location.SAMPLES)
