@@ -41,7 +41,7 @@ def simulate_player(state: State, player: Robot, move: Move):
 
             elif player.target == Location.MOLECULES and move.arg in [1,2,3,4,5]:
                 if state.available_molecules[move.arg] <= 0:
-                    raise Exception("Molecule " + str(move.arg) + " not available")
+                    return
 
                 state.available_molecules[move.arg] -= 1
                 player.storage[move.arg] += 1
@@ -49,7 +49,7 @@ def simulate_player(state: State, player: Robot, move: Move):
             elif player.target == Location.LABORATORY:
                 samples = list(filter(lambda s: s.id == move.arg, player.samples))
                 if len(samples) == 0:
-                    raise Exception("Invalid sample " + str(move.arg))
+                    return
 
                 sample = samples[0]
                 # difference = positive_list_difference(player.storage, sample.cost)
@@ -81,7 +81,7 @@ def simulate_player(state: State, player: Robot, move: Move):
                         state.add_sample(sample)
 
                 if len(player_samples) == 0 and len(cloud_samples) == 0:
-                    raise Exception("Invalid sample " + str(move.arg))
+                    return
 
     player.eta = max(0, player.eta - 1)
     for project in state.projects:
