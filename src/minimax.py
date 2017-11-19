@@ -114,6 +114,9 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
             if producable_cloud_samples(player, state) and len(player.samples) >= 3:
                 id = player.get_sorted_samples(state)[-1].id
                 pos_moves.append(Move(Action.CONNECT, id))
+            elif producable_cloud_samples(player, state):
+                pos_moves.append(Move(Action.CONNECT, producable_cloud_samples(player, state)[0]))
+
 
 
         elif len(diagnosed_samples) >= 3 and player.prev_location != Location.MOLECULES:
