@@ -119,13 +119,13 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
             if undiagnosed_samples:
                 pos_moves.append(Move(Action.CONNECT, undiagnosed_samples[0].id))
             else:
-                producible = producible_cloud_samples(player, state)
+                producible_in_cloud = producible_cloud_samples(player, state)
                 producible_in_hand = producible_samples_in_hand(player, state)
-                if producible and len(player.samples) >= 3:
+                if producible_in_cloud and len(player.samples) >= 3:
                     id = player.get_sorted_samples(state)[-1].id
                     pos_moves.append(Move(Action.CONNECT, id))
-                elif producible:
-                    pos_moves.append(Move(Action.CONNECT, producible[0].id))
+                elif producible_in_cloud:
+                    pos_moves.append(Move(Action.CONNECT, producible_in_cloud[0].id))
                 elif producible_in_hand and player.prev_location != Location.MOLECULES:
                     pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
                 elif len(diagnosed_samples) < 3:
@@ -151,10 +151,8 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
             if ready_samples:
                 pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
             else:
-                for s in state.cloud_samples:
-                    if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
-                        pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
-                        break
+                if producible_cloud_samples(player, state) or len(player.samples) >= 3:
+                    pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
 
                 if not pos_moves:
                     pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
@@ -174,20 +172,13 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
             #         state.get_enemy(player).target != Location.SAMPLES:
             #     pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
         else:
-            for s in player.diagnosed_samples:
-                if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
-                    pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
-                    break
-
-            if not pos_moves:
-                for s in state.cloud_samples:
-                    if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
-                        pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
-                        break
+            if producible_samples_in_hand(player, state):
+                pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+            elif producible_cloud_samples(player, state):
+                pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
 
             if not pos_moves:
                 pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
-
 
     return pos_moves
 

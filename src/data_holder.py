@@ -149,7 +149,7 @@ class Robot:
     def could_satisfy(cost, available, collected_molecules, expertise):
         sample_cost_exp = positive_list_difference(cost, expertise)
 
-        missing_molecules = positive_list_difference(available, sample_cost_exp)
+        missing_molecules = positive_list_difference(sample_cost_exp, available)
         missing_molecules_sum = sum(missing_molecules)
 
         molecule_difference = positive_list_difference(sample_cost_exp, collected_molecules)
