@@ -122,8 +122,9 @@ def possible_move(state: State, player: Robot) -> Move:
             return Move(Action.CONNECT, get_rank(state, player))
 
         prod_samples_in_hand = producible_samples_in_hand(player, state)
-        if len([s for s in prod_samples_in_hand if s.rank == 1]) > 1 \
-                or [s for s in prod_samples_in_hand if s.rank > 1]:
+        # if len([s for s in prod_samples_in_hand if s.rank == 1]) > 1 \
+                # or len([s for s in prod_samples_in_hand if s.rank > 1]) > 1:
+        if len(prod_samples_in_hand) >= 2:
             return Move(Action.GOTO, Location.MOLECULES)
 
         return Move(Action.GOTO, Location.DIAGNOSIS)
