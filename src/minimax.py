@@ -141,6 +141,10 @@ def possible_move(state: State, player: Robot) -> Move:
         producible_in_cloud = producible_cloud_samples(player, state)
         producible_in_hand = producible_samples_in_hand(player, state)
         not_useful_samples = not_useful_samples_in_hand(player, state)
+
+        if not_useful_samples:
+            return Move(Action.CONNECT, not_useful_samples[0].id)
+
         if producible_in_cloud and len(player.samples) >= 3:
             id = player.get_sorted_samples(state)[-1].id
             return Move(Action.CONNECT, id)
@@ -153,9 +157,6 @@ def possible_move(state: State, player: Robot) -> Move:
 
         if len(diagnosed_samples) < 3:
             return Move(Action.GOTO, Location.SAMPLES)
-
-        if not_useful_samples:
-            return Move(Action.CONNECT, not_useful_samples[0].id)
 
         # drop worst sample into the cloud
         # if len(diagnosed_samples) >= 3 and not producible and not producible_in_hand:
