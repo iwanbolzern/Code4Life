@@ -82,14 +82,12 @@ def simulate_player(state: State, player: Robot, move: Move):
                         state.add_sample(sample)
 
                 if len(player_samples) == 0 and len(cloud_samples) == 0:
-                    #debug([s.id for s in player_samples])
-                    #debug([s.id for s in cloud_samples])
                     raise Exception("Invalid sample " + str(move.arg))
 
     player.eta = max(0, player.eta - 1)
     for project in state.projects:
         if not project.completed:
-            difference = positive_list_difference(player.expertise, project.req_expertise)
+            difference = positive_list_difference(project.req_expertise, player.expertise)
             if sum(difference) == 0:
                 player.score += 50
                 project.completed = True

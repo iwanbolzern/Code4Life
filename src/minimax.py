@@ -43,13 +43,21 @@ def eval_sample(state: State, player: Robot, sample: Sample):
     missing_molecules = positive_list_difference(player.storage, sample.cost)
     missing_molecules_sum = sum(missing_molecules)
     if missing_molecules_sum == 0:
-        return 0.85 * (sample.health + expertise_weight)
+        new_exp = copy.copy(player.expertise)
+        new_exp[sample.exp.value] += 1
+        project_diffs = (sum(positive_list_difference(proj.req_expertise, new_exp)) for proj in state.projects if not proj.completed)
+        project_diffs = sum(project_diffs) * 0.10
+        return 0.85 * (sample.health + expertise_weight) - project_diffs
 
     # missing molecules, but are available
     missing_molecules = positive_list_difference(state.available_molecules, sample.cost)
     missing_molecules_sum = sum(missing_molecules)
     if missing_molecules_sum == 0:
-        return 0.5 * (sample.health + expertise_weight)
+        new_exp = copy.copy(player.expertise)
+        new_exp[sample.exp.value] += 1
+        project_diffs = (sum(positive_list_difference(proj.req_expertise, new_exp)) for proj in state.projects if not proj.completed)
+        project_diffs = sum(project_diffs) * 0.10
+        return 0.5 * (sample.health + expertise_weight) - project_diffs
 
     # unproducible
     return 0.05 * (sample.health + expertise_weight)
