@@ -124,7 +124,7 @@ class Robot:
 
     def missing_molecules(self, state):
         missing_molecules = []
-        storage = copy.deepcopy(self.storage)
+        storage = copy.copy(self.storage)
         sorted_samples = self.get_sorted_samples(state)
         for i, sample in enumerate(sorted_samples):
             missing_molecules.append(storage if i == 0 else missing_molecules[i - 1])
@@ -139,3 +139,4 @@ class Robot:
             if collected_molecules[m_type] < 0:
                 return False, collected_molecules
         return True, collected_molecules
+

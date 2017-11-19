@@ -106,7 +106,7 @@ def rotate(l, n):
 sample_id = 0
 
 def get_sample(rank: int) -> Sample:
-    sample = copy.deepcopy(sample_stock[rank][0])
+    sample = copy.copy(sample_stock[rank][0])
     sample_stock[rank] = rotate(sample_stock[rank], 1)
 
     global sample_id

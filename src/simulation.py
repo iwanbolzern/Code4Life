@@ -82,6 +82,8 @@ def simulate_player(state: State, player: Robot, move: Move):
                         state.add_sample(sample)
 
                 if len(player_samples) == 0 and len(cloud_samples) == 0:
+                    #debug([s.id for s in player_samples])
+                    #debug([s.id for s in cloud_samples])
                     raise Exception("Invalid sample " + str(move.arg))
 
     player.eta = max(0, player.eta - 1)

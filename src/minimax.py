@@ -19,7 +19,7 @@ def eval_robot(state: State, player: Robot):
     eval_score = player.score
     eval_score += expertise_weight * sum(player.expertise)
 
-    sample_scores = (eval_sample(state, player, s) for s in player.samples)
+    sample_scores = [eval_sample(state, player, s) for s in player.samples]
 
     return eval_score + sum(sample_scores)
 
@@ -57,9 +57,9 @@ def eval_sample(state: State, player: Robot, sample: Sample):
 
 def get_rank(state, player):
     total_ex = sum(player.expertise)
-    if total_ex >= 12:
+    if total_ex >= 6:
         return 3
-    elif total_ex >= 9:
+    elif total_ex >= 2:
         return 2
     else:
         return 1
@@ -84,7 +84,7 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
         diagnosed_samples = player.diagnosed_samples
         if undiagnosed_samples:
             pos_moves.append(Move(Action.CONNECT, undiagnosed_samples[0].id))
-        elif len(diagnosed_samples) >= 3:
+        elif len(diagnosed_samples) >= 3 and player.prev_location != Location.MOLECULES:
             pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
         elif len(diagnosed_samples) < 3:
             pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
@@ -106,7 +106,7 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
         missing_molecules = player.missing_molecules(state)
         missing_molecule = get_next_molecule(missing_molecules, state)
         if player.id == 0:
-            debug(missing_molecules)
+            pass#debug(missing_molecules)
 
         if sum(player.storage) < 10 and missing_molecule:
             pos_moves.append(Move(Action.CONNECT, missing_molecule))
