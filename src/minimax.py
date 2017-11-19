@@ -194,6 +194,11 @@ def possible_move(state: State, player: Robot) -> Move:
         #     return Move(Action.GOTO, Location.MOLECULES)
 
     elif player.target == Location.LABORATORY:
+
+        # try to block enemy
+        # if player.score > state.get_enemy(player).score and state.same_station_count_b > 1:
+            # return Move(Action.GOTO, Location.LABORATORY)
+
         ready_samples = player.ready_samples(state)
         if ready_samples:
             return Move(Action.CONNECT, ready_samples[0].id)

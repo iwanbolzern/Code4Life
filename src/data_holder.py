@@ -73,6 +73,8 @@ class State:
         self.available_molecules = None #[#a, #b...]
         self.cloud_samples = []
         self.projects = []
+        self.same_station_count_a = 0
+        self.same_station_count_b = 0
 
     def add_sample(self, s):
         if s.carried_by == -1:
