@@ -79,6 +79,12 @@ def get_rank(state, player):
     else:
         return 1
 
+def producable_cloud_samples(player, state):
+    samples = []
+    for s in state.cloud_samples:
+        if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
+            samples.append(s)
+
 def possible_moves(state: State, player: Robot) -> List[Move]:
     pos_moves = []
     # start position
@@ -87,11 +93,16 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
 
     # Sample position
     elif player.target == Location.SAMPLES:
-        #TODO: check if we should allow to go to Molecules or Factory
         if len(player.samples) < 3:
             pos_moves.append(Move(Action.CONNECT, get_rank(state, player)))
         else:
-            pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
+            for s in player.diagnosed_samples:
+                if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
+                    pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+                    break
+
+            if not pos_moves:
+                pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
 
     # Diagnosis Station TODO: check if this rules make sense
     elif player.target == Location.DIAGNOSIS:
@@ -99,6 +110,12 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
         diagnosed_samples = player.diagnosed_samples
         if undiagnosed_samples:
             pos_moves.append(Move(Action.CONNECT, undiagnosed_samples[0].id))
+        else:
+            if producable_cloud_samples(player, state) and len(player.samples) >= 3:
+                id = player.get_sorted_samples(state)[-1].id
+                pos_moves.append(Move(Action.CONNECT, id))
+
+
         elif len(diagnosed_samples) >= 3 and player.prev_location != Location.MOLECULES:
             pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
         elif len(diagnosed_samples) < 3:
@@ -110,8 +127,7 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
 
         # drop worst sample into the cloud
         if diagnosed_samples:
-            id = player.get_sorted_samples(state)[-1].id
-            pos_moves.append(Move(Action.CONNECT, id))
+
 
         if player.ready_samples(state):
             pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
@@ -138,7 +154,7 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
 
                 if not pos_moves:
                     pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
-                        
+
             # just wait
             # if player.score + sum(s.health for s in ready_samples) > \
             #     state.get_enemy(player).score + sum(s.health for s in state.get_enemy(player).ready_samples(state)):
