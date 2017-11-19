@@ -70,11 +70,11 @@ def get_rank(state, player):
     num_rank_1 = len([s for s in player.samples if s.rank == 1])
     total_ex = sum(player.expertise)
     if total_ex >= 12:
-        if num_rank_1 <= 0:
+        if num_rank_1 <= 1:
             return 1
         return 3
-    elif total_ex >= 9:
-        if num_rank_1 <= 2:
+    elif total_ex >= 7:
+        if num_rank_1 <= 1:
             return 1
         return 2
     else:
@@ -85,7 +85,7 @@ def producible_cloud_samples(player, state):
     samples = []
     for s in state.cloud_samples:
         helps_projects = sample_helps_projects(s, player, state.projects)
-        if helps_projects >= 0 and Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
+        if helps_projects >= 1 and Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
             samples.append(s)
     return sorted(samples, key=lambda s: sample_sort(s, player, state))
 
@@ -100,7 +100,7 @@ def not_usefull_samples_in_hand(player, state):
     samples = []
     for s in player.diagnosed_samples:
         helps_projects = sample_helps_projects(s, player, state.projects)
-        if helps_projects <= -1:
+        if helps_projects <= 0 and s.health < 10:
             samples.append(s)
     return samples
 
@@ -116,10 +116,10 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
         if len(player.samples) < 3:
             pos_moves.append(Move(Action.CONNECT, get_rank(state, player)))
         else:
-            for s in player.diagnosed_samples:
-                if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
-                    pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
-                    break
+            prod_samples_in_hand = not_usefull_samples_in_hand(player, state)
+            if len([s for s in prod_samples_in_hand if s.rank == 1]) > 1 \
+                    or [s for s in prod_samples_in_hand if s.rank > 1]:
+                pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
 
             if not pos_moves:
                 pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
@@ -190,7 +190,8 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
             #         state.get_enemy(player).target != Location.SAMPLES:
             #     pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
         else:
-            if producible_samples_in_hand(player, state):
+            if len([s for s in producible_samples_in_hand(player, state) if s.rank == 1]) >= 2 \
+                    or [s for s in producible_samples_in_hand(player, state) if s.rank > 1] :
                 pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
             elif producible_cloud_samples(player, state):
                 pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
