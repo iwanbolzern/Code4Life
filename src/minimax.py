@@ -78,7 +78,7 @@ def get_rank(state, player):
         if num_rank_3 == 2:
             return 2
         return 3
-    elif total_ex >= 8:
+    elif total_ex >= 7:
         # if num_rank_1 <= 1:
             # return 1
         return 2
@@ -135,16 +135,17 @@ def possible_move(state: State, player: Robot) -> Move:
         if undiagnosed_samples:
             return Move(Action.CONNECT, undiagnosed_samples[0].id)
 
-        if len([s for s in player.ready_samples(state) if s.rank == 1]) >= 2 or \
-                [s for s in player.ready_samples(state) if s.rank > 1]:
-            return Move(Action.GOTO, Location.LABORATORY)
-
-        producible_in_cloud = producible_cloud_samples(player, state)
         producible_in_hand = producible_samples_in_hand(player, state)
-        not_useful_samples = not_useful_samples_in_hand(player, state)
+        if (len([s for s in player.ready_samples(state) if s.rank == 1]) >= 2 or \
+                [s for s in player.ready_samples(state) if s.rank > 1]) and not \
+                producible_in_hand:
+            return Move(Action.GOTO, Location.LABORATORY)
 
         if producible_in_hand and player.prev_location != Location.MOLECULES:
             return Move(Action.GOTO, Location.MOLECULES)
+
+        producible_in_cloud = producible_cloud_samples(player, state)
+        not_useful_samples = not_useful_samples_in_hand(player, state)
 
         if not_useful_samples:
             return Move(Action.CONNECT, not_useful_samples[0].id)
