@@ -73,11 +73,22 @@ def get_rank(state, player):
     else:
         return 1
 
-def producable_cloud_samples(player, state):
+
+def producible_cloud_samples(player, state):
     samples = []
     for s in state.cloud_samples:
+        helps_projects = sample_helps_projects(s, player, state.projects)
+        if helps_projects > 0 and Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
+            samples.append(s)
+    return samples
+
+def producible_samples_in_hand(player, state):
+    samples = []
+    for s in player.diagnosed_samples:
         if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
             samples.append(s)
+    return samples
+
 
 def possible_moves(state: State, player: Robot) -> List[Move]:
     pos_moves = []
@@ -100,34 +111,30 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
 
     # Diagnosis Station TODO: check if this rules make sense
     elif player.target == Location.DIAGNOSIS:
-        undiagnosed_samples = player.undiagnosed_samples
-        diagnosed_samples = player.diagnosed_samples
-        if undiagnosed_samples:
-            pos_moves.append(Move(Action.CONNECT, undiagnosed_samples[0].id))
-        else:
-            if producable_cloud_samples(player, state) and len(player.samples) >= 3:
-                id = player.get_sorted_samples(state)[-1].id
-                pos_moves.append(Move(Action.CONNECT, id))
-            elif producable_cloud_samples(player, state):
-                pos_moves.append(Move(Action.CONNECT, producable_cloud_samples(player, state)[0]))
-
-
-
-        elif len(diagnosed_samples) >= 3 and player.prev_location != Location.MOLECULES:
-            pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
-        elif len(diagnosed_samples) < 3:
-            pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
-            # take a sample from the cloud
-            for s in state.cloud_samples:
-                if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
-                    pos_moves.append(Move(Action.CONNECT, s.id))
-
-        # drop worst sample into the cloud
-        if diagnosed_samples:
-
-
         if player.ready_samples(state):
             pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
+        else:
+            undiagnosed_samples = player.undiagnosed_samples
+            diagnosed_samples = player.diagnosed_samples
+            if undiagnosed_samples:
+                pos_moves.append(Move(Action.CONNECT, undiagnosed_samples[0].id))
+            else:
+                producible = producible_cloud_samples(player, state)
+                producible_in_hand = producible_samples_in_hand(player, state)
+                if producible and len(player.samples) >= 3:
+                    id = player.get_sorted_samples(state)[-1].id
+                    pos_moves.append(Move(Action.CONNECT, id))
+                elif producible:
+                    pos_moves.append(Move(Action.CONNECT, producible[0].id))
+                elif producible_in_hand and player.prev_location != Location.MOLECULES:
+                    pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+                elif len(diagnosed_samples) < 3:
+                    pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
+                else:
+                    # drop worst sample into the cloud
+                    # if len(diagnosed_samples) >= 3 and not producible and not producible_in_hand:
+                    id = player.get_sorted_samples(state)[-1].id
+                    pos_moves.append(Move(Action.CONNECT, id))
 
     # Molecules Station
     elif player.target == Location.MOLECULES:
