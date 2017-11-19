@@ -136,7 +136,8 @@ def possible_move(state: State, player: Robot) -> Move:
 
     # Sample position
     elif player.target == Location.SAMPLES:
-        if len(player.samples) < 3:
+        producible_in_cloud = producible_cloud_samples(player, state)
+        if (3 - len(producible_in_cloud)) > len(player.samples):
             return Move(Action.CONNECT, get_rank(state, player))
 
         prod_samples_in_hand = producible_samples_in_hand(player, state)
