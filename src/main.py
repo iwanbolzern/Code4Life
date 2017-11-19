@@ -29,12 +29,16 @@ for i in range(project_count):
 state = None
 prev_robot_a = None
 prev_robot_b = None
+same_station_count_a = 0
+same_station_count_b = 0
 
 def read_input():
     time = datetime.now()
     global state
     global prev_robot_a
     global prev_robot_b
+    global same_station_count_a
+    global same_station_count_b
     state = State()
 
     #Read robot a
@@ -50,10 +54,21 @@ def read_input():
     state.robot_a.prev_location = prev_robot_a
     # add prev loctions
     if state.robot_a.eta <= 0:
+        if prev_robot_a == state.robot_a.target:
+            same_station_count_a += 1
+        else:
+            same_station_count_a = 0
+        state.same_station_count_a = same_station_count_a
         prev_robot_a = state.robot_a.target
+
 
     state.robot_b.prev_location = prev_robot_b
     if state.robot_b.eta <= 0:
+        if prev_robot_b == state.robot_b.target:
+            same_station_count_b += 1
+        else:
+            same_station_count_b = 0
+        state.same_station_count_b = same_station_count_b
         prev_robot_b = state.robot_b.target
 
     input_t = input()
