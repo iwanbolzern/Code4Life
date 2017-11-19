@@ -140,3 +140,12 @@ class Robot:
                 return False, collected_molecules
         return True, collected_molecules
 
+    @staticmethod
+    def could_satisfy(cost, available, collected_molecules, expertise):
+        tmp_collected = copy.copy(collected_molecules)
+        for m_type, cost in enumerate(cost):
+            collected_molecules[m_type] -= (cost - expertise[m_type] - available[m_type])
+            tmp_collected[m_type] += (cost - expertise[m_type] - tmp_collected[m_type])
+            if collected_molecules[m_type] < 0 or sum(tmp_collected) > 10:
+                return False, collected_molecules
+        return True, collected_molecules

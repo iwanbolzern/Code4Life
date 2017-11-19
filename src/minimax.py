@@ -57,7 +57,7 @@ def eval_sample(state: State, player: Robot, sample: Sample):
 
 def get_rank(state, player):
     total_ex = sum(player.expertise)
-    if total_ex >= 6:
+    if total_ex >= 9:
         return 3
     elif total_ex >= 2:
         return 2
@@ -89,9 +89,10 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
         elif len(diagnosed_samples) < 3:
             pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
             # take a sample from the cloud
-            if state.cloud_samples:
-                id = sorted(state.cloud_samples, key=lambda x: sample_sort(x,player,state))[0].id
-                pos_moves.append(Move(Action.CONNECT, id))
+            for s in state.cloud_samples:
+                if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
+                 id = sorted(state.cloud_samples, key=lambda x: sample_sort(x,player,state))[0].id
+                 pos_moves.append(Move(Action.CONNECT, id))
 
         # drop worst sample into the cloud
         if diagnosed_samples:
@@ -119,9 +120,9 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
         else:
             pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
         # just wait
-        if player.score + sum(s.health for s in ready_samples) > \
-            state.get_enemy(player).score + sum(s.health for s in state.get_enemy(player).ready_samples(state)):
-            pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+        # if player.score + sum(s.health for s in ready_samples) > \
+        #     state.get_enemy(player).score + sum(s.health for s in state.get_enemy(player).ready_samples(state)):
+        #     pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
 
     elif player.target == Location.LABORATORY:
         ready_samples = player.ready_samples(state)
