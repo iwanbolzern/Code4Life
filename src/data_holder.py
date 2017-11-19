@@ -132,8 +132,9 @@ class Robot:
         storage = copy.copy(self.storage)
         sorted_samples = self.get_sorted_samples(state)
         for i, sample in enumerate(sorted_samples):
+            sample_cost_exp = positive_list_difference(sample.cost, self.expertise)
             missing_molecules.append(storage if i == 0 else missing_molecules[i - 1])
-            missing_molecules[i] = list(list_difference(missing_molecules[i], sample.cost))
+            missing_molecules[i] = list(list_difference(missing_molecules[i], sample_cost_exp))
 
         return missing_molecules
 

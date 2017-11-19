@@ -42,11 +42,15 @@ def eval_sample(state: State, player: Robot, sample: Sample):
     # sample is ready for LABORATORY
     sample_cost_exp = positive_list_difference(sample.cost, player.expertise)
 
+    # balance expertise gain by choosing samples which contribute to currently low sample expertise
+    max_sample_expertise = max(player.expertise)
+    sample_exp_balance_factor = max_sample_expertise - player.expertise[sample.exp.value]
+
     missing_molecules = positive_list_difference(player.storage, sample_cost_exp)
     missing_molecules_sum = sum(missing_molecules)
     if missing_molecules_sum == 0:
         helps_projects = sample_helps_projects(sample, player, state.projects)
-        return 0.85 * (sample.health + expertise_weight) + helps_projects
+        return 0.85 * (sample.health + expertise_weight) + (-0.5 if not helps_projects and sample.rank == 1 else helps_projects) + sample_exp_balance_factor
 
     # missing molecules, but are available
     sample_cost_exp = positive_list_difference(sample.cost, player.expertise)
@@ -60,22 +64,23 @@ def eval_sample(state: State, player: Robot, sample: Sample):
 
     if missing_molecules_sum == 0 and molecule_difference_sum + player_storage_sum <= 10:
         helps_projects = sample_helps_projects(sample, player, state.projects)
-        return 0.5 * (sample.health + expertise_weight) + helps_projects
+        return 0.5 * (sample.health + expertise_weight) + (-0.5 if not helps_projects and sample.rank == 1 else helps_projects) + sample_exp_balance_factor
 
     # unproducible
     return 0.05 * (sample.health + expertise_weight)
 
 
 def get_rank(state, player):
-    num_rank_1 = len([s for s in player.samples if s.rank == 1])
+    # num_rank_1 = len([s for s in player.samples if s.rank == 1])
+    num_rank_3 = len([s for s in player.samples if s.rank == 3])
     total_ex = sum(player.expertise)
     if total_ex >= 12:
-        if num_rank_1 <= 1:
-            return 1
+        if num_rank_3 == 2:
+            return 2
         return 3
     elif total_ex >= 7:
-        if num_rank_1 <= 1:
-            return 1
+        # if num_rank_1 <= 1:
+            # return 1
         return 2
     else:
         return 1
@@ -189,10 +194,10 @@ def possible_move(state: State, player: Robot) -> Move:
             #         state.get_enemy(player).target != Location.SAMPLES:
             #     return Move(Action.GOTO, Location.LABORATORY)
 
-        # if len([s for s in producible_samples_in_hand(player, state) if s.rank == 1]) >= 2 \
-        #         or [s for s in producible_samples_in_hand(player, state) if s.rank > 1] :
-        #     return Move(Action.GOTO, Location.MOLECULES)
-        if producible_cloud_samples(player, state):
+        if len([s for s in producible_samples_in_hand(player, state) if s.rank == 1]) >= 2 \
+                or [s for s in producible_samples_in_hand(player, state) if s.rank > 1] :
+            return Move(Action.GOTO, Location.MOLECULES)
+        elif producible_cloud_samples(player, state):
             return Move(Action.GOTO, Location.DIAGNOSIS)
 
         return Move(Action.GOTO, Location.SAMPLES)
