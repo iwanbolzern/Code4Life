@@ -104,9 +104,10 @@ def producible_samples_in_hand(player, state):
 def not_useful_samples_in_hand(player, state):
     samples = []
     for s in player.diagnosed_samples:
-        helps_projects = sample_helps_projects(s, player, state.projects)
-        if helps_projects <= 0 and s.health < 10:
-            samples.append(s)
+        if s.health < 10:
+            helps_projects = sample_helps_projects(s, player, state.projects)
+            if helps_projects <= 0:
+                samples.append(s)
     return samples
 
 
