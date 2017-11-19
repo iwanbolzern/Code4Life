@@ -52,7 +52,13 @@ def eval_sample(state: State, player: Robot, sample: Sample):
     # missing molecules, but are available
     missing_molecules = positive_list_difference(state.available_molecules, sample.cost)
     missing_molecules_sum = sum(missing_molecules)
-    if missing_molecules_sum == 0:
+
+    sample_cost_exp = positive_list_difference(sample.cost, player.expertise)
+    molecule_difference = positive_list_difference(sample_cost_exp, player.storage)
+    molecule_difference_sum = sum(molecule_difference)
+    player_storage_sum = sum(player.storage)
+
+    if missing_molecules_sum == 0 and molecule_difference_sum + player_storage_sum <= 10:
         new_exp = copy.copy(player.expertise)
         new_exp[sample.exp.value] += 1
         project_diffs = (sum(positive_list_difference(proj.req_expertise, new_exp)) for proj in state.projects if not proj.completed)
