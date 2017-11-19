@@ -125,35 +125,48 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
 
         if sum(player.storage) < 10 and missing_molecule:
             pos_moves.append(Move(Action.CONNECT, missing_molecule))
-        # move to other station
-        ready_samples = player.ready_samples(state)
-        if ready_samples:
-            pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
-        elif len(player.samples) < 3:
-            pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
         else:
-            pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
-        # just wait
-        # if player.score + sum(s.health for s in ready_samples) > \
-        #     state.get_enemy(player).score + sum(s.health for s in state.get_enemy(player).ready_samples(state)):
-        #     pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+            # move to other station
+            ready_samples = player.ready_samples(state)
+            if ready_samples:
+                pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
+            else:
+                for s in state.cloud_samples:
+                    if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
+                        pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
+                        break
+
+                if not pos_moves:
+                    pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
+                        
+            # just wait
+            # if player.score + sum(s.health for s in ready_samples) > \
+            #     state.get_enemy(player).score + sum(s.health for s in state.get_enemy(player).ready_samples(state)):
+            #     pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
 
     elif player.target == Location.LABORATORY:
         ready_samples = player.ready_samples(state)
         if ready_samples:
             pos_moves.append(Move(Action.CONNECT, ready_samples[0].id))
 
-            if player.score + sum(s.health for s in ready_samples) > \
-            state.get_enemy(player).score + sum(s.health for s in state.get_enemy(player).ready_samples(state)) and \
-                    state.get_enemy(player).target != Location.SAMPLES:
-                pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
+            # if player.score + sum(s.health for s in ready_samples) > \
+            # state.get_enemy(player).score + sum(s.health for s in state.get_enemy(player).ready_samples(state)) and \
+            #         state.get_enemy(player).target != Location.SAMPLES:
+            #     pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
         else:
-            pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
-            if player.diagnosed_samples:
-                pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+            for s in player.diagnosed_samples:
+                if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
+                    pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+                    break
 
-            if state.cloud_samples:
-                pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
+            if not pos_moves:
+                for s in state.cloud_samples:
+                    if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
+                        pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
+                        break
+
+            if not pos_moves:
+                pos_moves.append(Move(Action.GOTO, Location.SAMPLES))
 
 
     return pos_moves
