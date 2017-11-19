@@ -71,16 +71,16 @@ def eval_sample(state: State, player: Robot, sample: Sample):
 
 
 def get_rank(state, player):
-    # num_rank_1 = len([s for s in player.samples if s.rank == 1])
+    #num_rank_1 = len([s for s in player.samples if s.rank == 1])
     num_rank_3 = len([s for s in player.samples if s.rank == 3])
     total_ex = sum(player.expertise)
-    if total_ex >= 12:
+    if total_ex >= 11:
         if num_rank_3 == 2:
             return 2
         return 3
     elif total_ex >= 7:
-        # if num_rank_1 <= 1:
-            # return 1
+        #if num_rank_1 <= 1:
+        #    return 1
         return 2
     else:
         return 1
@@ -223,6 +223,10 @@ def possible_move(state: State, player: Robot) -> Move:
         max_sample_expertise = max(player.expertise)
         if [s for s in producible_cloud_samples(player, state) if s.rank >= 2 and get_expertise_diff(max_sample_expertise, player, s) >= 2]:
              return Move(Action.GOTO, Location.DIAGNOSIS)
+
+        #highly risk move
+        if len([s for s in player.samples if s.rank == 1]) >= 2:
+            return Move(Action.GOTO, Location.MOLECULES)
 
         return Move(Action.GOTO, Location.SAMPLES)
 
