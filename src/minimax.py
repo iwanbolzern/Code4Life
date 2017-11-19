@@ -1,7 +1,7 @@
 import copy
 from typing import List
 
-from utils import sample_sort, get_next_molecule, positive_list_difference
+from utils import sample_sort, get_next_molecule, positive_list_difference, sample_helps_projects
 from data_holder import State, Robot, Location, Action, Move, Sample
 from simulation import simulate_action
 
@@ -43,11 +43,8 @@ def eval_sample(state: State, player: Robot, sample: Sample):
     missing_molecules = positive_list_difference(player.storage, sample.cost)
     missing_molecules_sum = sum(missing_molecules)
     if missing_molecules_sum == 0:
-        new_exp = copy.copy(player.expertise)
-        new_exp[sample.exp.value] += 1
-        project_diffs = (sum(positive_list_difference(proj.req_expertise, new_exp)) for proj in state.projects if not proj.completed)
-        project_diffs = sum(project_diffs) * 0.10
-        return 0.85 * (sample.health + expertise_weight) - project_diffs
+        helps_projects = sample_helps_projects(sample, player, state.projects)
+        return 0.85 * (sample.health + expertise_weight) + helps_projects
 
     # missing molecules, but are available
     sample_cost_exp = positive_list_difference(sample.cost, player.expertise)
@@ -60,11 +57,8 @@ def eval_sample(state: State, player: Robot, sample: Sample):
     player_storage_sum = sum(player.storage)
 
     if missing_molecules_sum == 0 and molecule_difference_sum + player_storage_sum <= 10:
-        new_exp = copy.copy(player.expertise)
-        new_exp[sample.exp.value] += 1
-        project_diffs = (sum(positive_list_difference(proj.req_expertise, new_exp)) for proj in state.projects if not proj.completed)
-        project_diffs = sum(project_diffs) * 0.10
-        return 0.5 * (sample.health + expertise_weight) - project_diffs
+        helps_projects = sample_helps_projects(sample, player, state.projects)
+        return 0.5 * (sample.health + expertise_weight) + helps_projects
 
     # unproducible
     return 0.05 * (sample.health + expertise_weight)

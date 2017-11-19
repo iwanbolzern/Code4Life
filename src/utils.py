@@ -1,6 +1,7 @@
+import copy
 from typing import List, Iterator
 
-from data_holder import Sample, State, Move, Action, MoleculeType
+from data_holder import Sample, State, Move, Action, MoleculeType, Project, Robot
 from minimax import eval_sample
 
 
@@ -19,6 +20,19 @@ def get_next_molecule(missing_molecules, state):
             if missing_count < 0 and state.available_molecules[type] > 0:
                 return MoleculeType(type)
     return None
+
+def sample_helps_projects(sample: Sample, player: Robot, projects: List[Project]):
+    count = 0
+    for project in projects:
+        # expertise is not in project
+        if project.req_expertise[sample.exp.value] == 0:
+            continue
+
+        # project expertise is larger than player expertise
+        if project.req_expertise[sample.exp.value] > player.expertise[sample.exp.value]:
+            count += 1
+
+    return count
 
 def move_to_string(move: Move):
     if move.action == Action.GOTO:
