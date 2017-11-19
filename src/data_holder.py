@@ -142,7 +142,8 @@ class Robot:
     def satisfy(cost, collected_molecules, expertise):
         collected_molecules_tmp = copy.copy(collected_molecules)
         for m_type, cost_type in enumerate(cost):
-            collected_molecules_tmp[m_type] -= (cost_type - expertise[m_type])
+            collected_molecules_tmp[m_type] -= \
+                (cost_type - expertise[m_type]) if (cost_type - expertise[m_type]) > 0 else 0
             if collected_molecules_tmp[m_type] < 0:
                 return False, collected_molecules_tmp
         return True, collected_molecules_tmp

@@ -134,7 +134,8 @@ def possible_move(state: State, player: Robot) -> Move:
         if undiagnosed_samples:
             return Move(Action.CONNECT, undiagnosed_samples[0].id)
 
-        if len([s for s in player.ready_samples(state) if s.rank == 1]) >= 2 or [s for s in player.ready_samples(state) if s.rank > 1]:
+        if len([s for s in player.ready_samples(state) if s.rank == 1]) >= 2 or \
+                [s for s in player.ready_samples(state) if s.rank > 1]:
             return Move(Action.GOTO, Location.LABORATORY)
 
         producible_in_cloud = producible_cloud_samples(player, state)
