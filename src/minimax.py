@@ -100,7 +100,7 @@ def get_rank(state, player):
         if player.prev_location == Location.DIAGNOSIS:
             return 2
         return 3
-    elif total_ex >= 7:
+    elif total_ex >= 9:
         #if num_rank_1 <= 1:
         #    return 1
         return 2
