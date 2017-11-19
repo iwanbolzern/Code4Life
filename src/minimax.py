@@ -40,7 +40,9 @@ def eval_sample(state: State, player: Robot, sample: Sample):
         return 0.175 * (min_score + expertise_weight)
 
     # sample is ready for LABORATORY
-    missing_molecules = positive_list_difference(player.storage, sample.cost)
+    sample_cost_exp = positive_list_difference(sample.cost, player.expertise)
+
+    missing_molecules = positive_list_difference(player.storage, sample_cost_exp)
     missing_molecules_sum = sum(missing_molecules)
     if missing_molecules_sum == 0:
         helps_projects = sample_helps_projects(sample, player, state.projects)
@@ -65,10 +67,15 @@ def eval_sample(state: State, player: Robot, sample: Sample):
 
 
 def get_rank(state, player):
+    num_rank_1 = len([s for s in player.samples if s.rank == 1])
     total_ex = sum(player.expertise)
-    if total_ex >= 9:
+    if total_ex >= 12:
+        if num_rank_1 <= 0:
+            return 1
         return 3
-    elif total_ex >= 2:
+    elif total_ex >= 9:
+        if num_rank_1 <= 2:
+            return 1
         return 2
     else:
         return 1
@@ -78,14 +85,22 @@ def producible_cloud_samples(player, state):
     samples = []
     for s in state.cloud_samples:
         helps_projects = sample_helps_projects(s, player, state.projects)
-        if helps_projects > 0 and Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
+        if helps_projects >= 0 and Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
             samples.append(s)
-    return samples
+    return sorted(samples, key=lambda s: sample_sort(s, player, state))
 
 def producible_samples_in_hand(player, state):
     samples = []
     for s in player.diagnosed_samples:
         if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
+            samples.append(s)
+    return samples
+
+def not_usefull_samples_in_hand(player, state):
+    samples = []
+    for s in player.diagnosed_samples:
+        helps_projects = sample_helps_projects(s, player, state.projects)
+        if helps_projects <= -1:
             samples.append(s)
     return samples
 
@@ -111,17 +126,20 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
 
     # Diagnosis Station TODO: check if this rules make sense
     elif player.target == Location.DIAGNOSIS:
-        if player.ready_samples(state):
-            pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
+        undiagnosed_samples = player.undiagnosed_samples
+        diagnosed_samples = player.diagnosed_samples
+        if undiagnosed_samples:
+            pos_moves.append(Move(Action.CONNECT, undiagnosed_samples[0].id))
         else:
-            undiagnosed_samples = player.undiagnosed_samples
-            diagnosed_samples = player.diagnosed_samples
-            if undiagnosed_samples:
-                pos_moves.append(Move(Action.CONNECT, undiagnosed_samples[0].id))
+            if len([s for s in player.ready_samples(state) if s.rank == 1]) >= 2 or [s for s in player.ready_samples(state) if s.rank > 1]:
+                pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
             else:
                 producible_in_cloud = producible_cloud_samples(player, state)
                 producible_in_hand = producible_samples_in_hand(player, state)
-                if producible_in_cloud and len(player.samples) >= 3:
+                not_usefulle_samples = not_usefull_samples_in_hand(player, state)
+                if not_usefulle_samples:
+                    pos_moves.append(Move(Action.CONNECT, not_usefulle_samples[0].id))
+                elif producible_in_cloud and len(player.samples) >= 3:
                     id = player.get_sorted_samples(state)[-1].id
                     pos_moves.append(Move(Action.CONNECT, id))
                 elif producible_in_cloud:

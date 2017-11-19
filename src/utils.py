@@ -12,7 +12,7 @@ def list_difference(left: List[int], right: List[int]) -> Iterator[int]:
     return map(int.__sub__, left, right)
 
 def positive_list_difference(left: List[int], right: List[int]) -> Iterator[int]:
-    return (0 if d < 0 else d for d in list_difference(left, right))
+    return [0 if d < 0 else d for d in list_difference(left, right)]
 
 def get_next_molecule(missing_molecules, state):
     for missing_per_sample in missing_molecules:

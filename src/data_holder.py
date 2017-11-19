@@ -117,13 +117,14 @@ class Robot:
         ready_samples = []
         collected_molecules = copy.copy(self.storage)
         for s in self.get_sorted_samples(state):
-            satisfy, collected_molecules = Robot.satisfy(s.cost, collected_molecules, self.expertise)
+            satisfy, collected_molecules_tmp = Robot.satisfy(s.cost, collected_molecules, self.expertise)
             if satisfy:
                 ready_samples.append(s)
+                collected_molecules = collected_molecules_tmp
         return ready_samples
 
     def get_sorted_samples(self, state: State):
-        diagnosed_samples_gen = (s for s in self.samples if sum(s.cost) > 0)
+        diagnosed_samples_gen = [s for s in self.samples if sum(s.cost) > 0]
         return sorted(diagnosed_samples_gen, key=lambda s: sample_sort(s, self, state))
 
     def missing_molecules(self, state):
@@ -138,12 +139,12 @@ class Robot:
 
     @staticmethod
     def satisfy(cost, collected_molecules, expertise):
-        collected_molecules = copy.copy(collected_molecules)
-        for m_type, cost in enumerate(cost):
-            collected_molecules[m_type] -= (cost - expertise[m_type])
-            if collected_molecules[m_type] < 0:
-                return False, collected_molecules
-        return True, collected_molecules
+        collected_molecules_tmp = copy.copy(collected_molecules)
+        for m_type, cost_type in enumerate(cost):
+            collected_molecules_tmp[m_type] -= (cost_type - expertise[m_type])
+            if collected_molecules_tmp[m_type] < 0:
+                return False, collected_molecules_tmp
+        return True, collected_molecules_tmp
 
     @staticmethod
     def could_satisfy(cost, available, collected_molecules, expertise):
