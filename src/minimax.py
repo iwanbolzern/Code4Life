@@ -106,8 +106,7 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
             # take a sample from the cloud
             for s in state.cloud_samples:
                 if Robot.could_satisfy(s.cost, state.available_molecules, player.storage, player.expertise):
-                    id = sorted(state.cloud_samples, key=lambda x: sample_sort(x,player,state))[0].id
-                    pos_moves.append(Move(Action.CONNECT, id))
+                    pos_moves.append(Move(Action.CONNECT, s.id))
 
         # drop worst sample into the cloud
         if diagnosed_samples:

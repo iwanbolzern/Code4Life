@@ -1,7 +1,7 @@
 import copy
 from enum import Enum
 
-from utils import list_difference, sample_sort
+from utils import list_difference, sample_sort, positive_list_difference
 
 
 class Action(Enum):
@@ -115,7 +115,7 @@ class Robot:
 
     def ready_samples(self, state):
         ready_samples = []
-        collected_molecules = copy.deepcopy(self.storage)
+        collected_molecules = copy.copy(self.storage)
         for s in self.get_sorted_samples(state):
             satisfy, collected_molecules = Robot.satisfy(s.cost, collected_molecules, self.expertise)
             if satisfy:
@@ -138,6 +138,7 @@ class Robot:
 
     @staticmethod
     def satisfy(cost, collected_molecules, expertise):
+        collected_molecules = copy.copy(collected_molecules)
         for m_type, cost in enumerate(cost):
             collected_molecules[m_type] -= (cost - expertise[m_type])
             if collected_molecules[m_type] < 0:
@@ -146,10 +147,13 @@ class Robot:
 
     @staticmethod
     def could_satisfy(cost, available, collected_molecules, expertise):
-        tmp_collected = copy.copy(collected_molecules)
-        for m_type, cost in enumerate(cost):
-            collected_molecules[m_type] -= (cost - expertise[m_type] - available[m_type])
-            tmp_collected[m_type] += (cost - expertise[m_type] - tmp_collected[m_type])
-            if collected_molecules[m_type] < 0 or sum(tmp_collected) > 10:
-                return False, collected_molecules
-        return True, collected_molecules
+        sample_cost_exp = positive_list_difference(cost, expertise)
+
+        missing_molecules = positive_list_difference(available, sample_cost_exp)
+        missing_molecules_sum = sum(missing_molecules)
+
+        molecule_difference = positive_list_difference(sample_cost_exp, collected_molecules)
+        molecule_difference_sum = sum(molecule_difference)
+        player_storage_sum = sum(collected_molecules)
+
+        return missing_molecules_sum == 0 and molecule_difference_sum + player_storage_sum <= 10
