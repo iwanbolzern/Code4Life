@@ -201,7 +201,16 @@ def possible_move(state: State, player: Robot) -> Move:
         if len([s for s in producible_samples_in_hand(player, state) if s.rank == 1]) >= 2 \
                 or len([s for s in producible_samples_in_hand(player, state) if s.rank > 1]) >= 2 :
             return Move(Action.GOTO, Location.MOLECULES)
-        elif [s for s in producible_cloud_samples(player, state) if s.rank >= 2]:
+
+        def get_expertise_diff(max_sample_expertise, player, sample):
+            # sample is ready for LABORATORY
+            sample_cost_exp = positive_list_difference(sample.cost, player.expertise)
+
+            # balance expertise gain by choosing samples which contribute to currently low sample expertise
+            sample_exp_balance_factor = max_sample_expertise - player.expertise[sample.exp.value]
+
+        max_sample_expertise = max(player.expertise)
+        if [s for s in producible_cloud_samples(player, state) if s.rank >= 2 and get_expertise_diff(max_sample_expertise, player, s) >= 2]:
              return Move(Action.GOTO, Location.DIAGNOSIS)
 
         return Move(Action.GOTO, Location.SAMPLES)
