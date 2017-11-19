@@ -56,6 +56,7 @@ def eval_sample(state: State, player: Robot, sample: Sample):
 
     # sum same molecules over all samples the enemy has in hand
     enemy_missing_molecules = [sum(x) for x in zip(*enemy_missing_molecules_sample_costs)]
+    enemy_missing_molecules = enemy_missing_molecules if enemy_missing_molecules else (5 * [0])
 
     available_with_enemy_taken = [x - y for x, y in zip(state.available_molecules, enemy_missing_molecules)]
     for_us = [x - y for x, y in zip(available_with_enemy_taken, sample_cost_exp)]
@@ -187,7 +188,7 @@ def possible_move(state: State, player: Robot) -> Move:
     elif player.target == Location.MOLECULES:
         missing_molecules = player.missing_molecules(state)
         missing_molecule = get_next_molecule(missing_molecules, state)
-
+        debug('Missing molecule {}', missing_molecule)
         if sum(player.storage) < 10 and missing_molecule:
             return Move(Action.CONNECT, missing_molecule)
 
@@ -226,7 +227,8 @@ def possible_move(state: State, player: Robot) -> Move:
             #     return Move(Action.GOTO, Location.LABORATORY)
 
         if len([s for s in producible_samples_in_hand(player, state) if s.rank == 1]) >= 2 \
-                or len([s for s in producible_samples_in_hand(player, state) if s.rank > 1]) >= 2 :
+                or len([s for s in producible_samples_in_hand(player, state) if s.rank > 1]) >= 2\
+                or len([s for s in producible_samples_in_hand(player, state) if s.rank == 3]) >= 1:
             return Move(Action.GOTO, Location.MOLECULES)
 
         def get_expertise_diff(max_sample_expertise, player, sample):
