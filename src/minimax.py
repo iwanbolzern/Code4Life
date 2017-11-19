@@ -50,10 +50,11 @@ def eval_sample(state: State, player: Robot, sample: Sample):
         return 0.85 * (sample.health + expertise_weight) - project_diffs
 
     # missing molecules, but are available
-    missing_molecules = positive_list_difference(state.available_molecules, sample.cost)
+    sample_cost_exp = positive_list_difference(sample.cost, player.expertise)
+
+    missing_molecules = positive_list_difference(state.available_molecules, sample_cost_exp)
     missing_molecules_sum = sum(missing_molecules)
 
-    sample_cost_exp = positive_list_difference(sample.cost, player.expertise)
     molecule_difference = positive_list_difference(sample_cost_exp, player.storage)
     molecule_difference_sum = sum(molecule_difference)
     player_storage_sum = sum(player.storage)
