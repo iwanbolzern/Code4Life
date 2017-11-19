@@ -179,6 +179,9 @@ def possible_move(state: State, player: Robot) -> Move:
         if ready_samples:
             return Move(Action.GOTO, Location.LABORATORY)
 
+        if state.get_enemy(player).target == Location.LABORATORY:
+            return Move(Action.GOTO, Location.MOLECULES)
+
         if producible_cloud_samples(player, state) or len(player.samples) >= 3:
             return Move(Action.GOTO, Location.DIAGNOSIS)
 
