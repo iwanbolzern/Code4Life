@@ -95,6 +95,8 @@ def get_rank(state, player):
     if total_ex >= 11:
         if num_rank_3 == 2:
             return 2
+        if player.prev_location != Location.SAMPLES:
+            return 2
         return 3
     elif total_ex >= 7:
         #if num_rank_1 <= 1:
