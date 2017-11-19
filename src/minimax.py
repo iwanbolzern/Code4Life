@@ -46,11 +46,28 @@ def eval_sample(state: State, player: Robot, sample: Sample):
     max_sample_expertise = max(player.expertise)
     sample_exp_balance_factor = max_sample_expertise - player.expertise[sample.exp.value]
 
+    enemy = state.get_enemy(player)
+    enemy_samples = enemy.samples
+    enemy_missing_molecules_sample_costs = []
+    for enemy_sample in enemy_samples:
+        enemy_missing_molecules_sample = positive_list_difference(enemy_sample.cost, enemy.expertise)
+        enemy_missing_molecules_sample = positive_list_difference(enemy_missing_molecules_sample, enemy.storage)
+        enemy_missing_molecules_sample_costs.append(enemy_missing_molecules_sample)
+
+    # sum same molecules over all samples the enemy has in hand
+    enemy_missing_molecules = [sum(x) for x in zip(*enemy_missing_molecules_sample_costs)]
+
+    available_with_enemy_taken = [x - y for x, y in zip(state.available_molecules, enemy_missing_molecules)]
+    for_us = [x - y for x, y in zip(available_with_enemy_taken, sample_cost_exp)]
+    # the lower this number the more we want to take molecules for this sample
+    take_from_enemy_factor = sum(x for x in for_us if x < 0)
+    take_from_enemy_factor = (take_from_enemy_factor * -0.1) if take_from_enemy_factor < 0 else 0
+
     missing_molecules = positive_list_difference(player.storage, sample_cost_exp)
     missing_molecules_sum = sum(missing_molecules)
     if missing_molecules_sum == 0:
         helps_projects = sample_helps_projects(sample, player, state.projects)
-        return 0.85 * (sample.health + expertise_weight) + (-0.5 if not helps_projects and sample.rank == 1 else helps_projects) + sample_exp_balance_factor
+        return 0.85 * (sample.health + expertise_weight) + (-0.5 if not helps_projects and sample.rank == 1 else helps_projects) + sample_exp_balance_factor + take_from_enemy_factor
 
     # missing molecules, but are available
     sample_cost_exp = positive_list_difference(sample.cost, player.expertise)
@@ -64,7 +81,7 @@ def eval_sample(state: State, player: Robot, sample: Sample):
 
     if missing_molecules_sum == 0 and molecule_difference_sum + player_storage_sum <= 10:
         helps_projects = sample_helps_projects(sample, player, state.projects)
-        return 0.5 * (sample.health + expertise_weight) + (-0.5 if not helps_projects and sample.rank == 1 else helps_projects) + sample_exp_balance_factor
+        return 0.5 * (sample.health + expertise_weight) + (-0.5 if not helps_projects and sample.rank == 1 else helps_projects) + sample_exp_balance_factor + take_from_enemy_factor
 
     # unproducible
     return 0.05 * (sample.health + expertise_weight)
