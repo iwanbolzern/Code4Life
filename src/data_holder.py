@@ -75,6 +75,7 @@ class State:
         self.projects = []
         self.same_station_count_a = 0
         self.same_station_count_b = 0
+        self.first_sample_draw = None
 
     def add_sample(self, s):
         if s.carried_by == -1:

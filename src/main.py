@@ -31,6 +31,7 @@ prev_robot_a = None
 prev_robot_b = None
 same_station_count_a = 0
 same_station_count_b = 0
+first_sample_draw = True
 
 def read_input():
     time = datetime.now()
@@ -39,6 +40,7 @@ def read_input():
     global prev_robot_b
     global same_station_count_a
     global same_station_count_b
+    global first_sample_draw
     state = State()
 
     #Read robot a
@@ -75,6 +77,9 @@ def read_input():
     debug(input_t)
     state.available_molecules = [int(i) for i in input_t.split()]
     state.projects = projects
+
+    first_sample_draw = first_sample_draw if state.robot_a.target != Location.DIAGNOSIS else False
+    state.first_sample_draw = first_sample_draw
 
     input_t = input()
     debug(input_t)
