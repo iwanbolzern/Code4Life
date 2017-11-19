@@ -89,13 +89,12 @@ def eval_sample(state: State, player: Robot, sample: Sample):
 
 
 def get_rank(state, player):
-    #num_rank_1 = len([s for s in player.samples if s.rank == 1])
+    num_rank_1 = len([s for s in player.samples if s.rank == 1])
     num_rank_3 = len([s for s in player.samples if s.rank == 3])
     total_ex = sum(player.expertise)
-    if min(player.expertise) < 2:
-        return 1
-
     if total_ex >= 11:
+        if min(player.expertise) < 1 and num_rank_1 == 0:
+            return 2
         if num_rank_3 == 2:
             return 2
         if player.prev_location == Location.DIAGNOSIS:

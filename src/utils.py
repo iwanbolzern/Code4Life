@@ -37,7 +37,6 @@ def get_next_molecule(missing_molecules, state):
         debug('missing per sample', missing_per_sample)
         debug('should take ', should_take)
 
-
         for take in should_take:
             if missing_per_sample[take[0]] < 0 and state.available_molecules[take[0]] > 0 and \
                                     state.available_molecules[take[0]] + missing_per_sample[take[0]] >= 0:
