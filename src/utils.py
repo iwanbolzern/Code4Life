@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Iterator
 
 from data_holder import Sample, State, Move, Action, MoleculeType
 from minimax import eval_sample
@@ -7,10 +7,10 @@ from minimax import eval_sample
 def sample_sort(sample: Sample, player, state: State):
     return eval_sample(state, player, sample)
 
-def list_difference(left: List[int], right: List[int]) -> List[int]:
+def list_difference(left: List[int], right: List[int]) -> Iterator[int]:
     return map(int.__sub__, left, right)
 
-def positive_list_difference(left: List[int], right: List[int]) -> List[int]:
+def positive_list_difference(left: List[int], right: List[int]) -> Iterator[int]:
     return (0 if d < 0 else d for d in list_difference(left, right))
 
 def get_next_molecule(missing_molecules, state):

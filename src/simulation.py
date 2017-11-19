@@ -1,7 +1,6 @@
 import copy
 from data_holder import State, Move
 from simulation_data import get_sample
-from minimax import get_missing_molecules
 from utils import positive_list_difference
 
 #SAMPLES	DIAGNOSIS	MOLECULES	LABORATORY  Start area

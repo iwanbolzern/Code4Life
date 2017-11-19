@@ -52,6 +52,9 @@ class Sample:
         :param health:
         :param exp:
         """
+        self.id = None
+        self.rank = None
+        self.carried_by = None
         self.health = int(health)
         self.exp = MoleculeType[exp] if exp != '0' else None
         self.cost_tmp = cost
@@ -100,6 +103,7 @@ class Robot:
         self.storage = [int(storage_a), int(storage_b), int(storage_c), int(storage_d), int(storage_e)]
         self.expertise = [int(expertise_a), int(expertise_b), int(expertise_c), int(expertise_d), int(expertise_e)]
         self.samples = []
+        self.prev_location = None
 
     @property
     def undiagnosed_samples(self):
