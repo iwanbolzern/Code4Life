@@ -190,10 +190,10 @@ def possible_moves(state: State, player: Robot) -> List[Move]:
             #         state.get_enemy(player).target != Location.SAMPLES:
             #     pos_moves.append(Move(Action.GOTO, Location.LABORATORY))
         else:
-            if len([s for s in producible_samples_in_hand(player, state) if s.rank == 1]) >= 2 \
-                    or [s for s in producible_samples_in_hand(player, state) if s.rank > 1] :
-                pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
-            elif producible_cloud_samples(player, state):
+            # if len([s for s in producible_samples_in_hand(player, state) if s.rank == 1]) >= 2 \
+                    # or [s for s in producible_samples_in_hand(player, state) if s.rank > 1] :
+                # pos_moves.append(Move(Action.GOTO, Location.MOLECULES))
+            if producible_cloud_samples(player, state):
                 pos_moves.append(Move(Action.GOTO, Location.DIAGNOSIS))
 
             if not pos_moves:
