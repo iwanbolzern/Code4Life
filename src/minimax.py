@@ -209,6 +209,7 @@ def possible_move(state: State, player: Robot) -> Move:
 
             # balance expertise gain by choosing samples which contribute to currently low sample expertise
             sample_exp_balance_factor = max_sample_expertise - player.expertise[sample.exp.value]
+            return sample_exp_balance_factor
 
         max_sample_expertise = max(player.expertise)
         if [s for s in producible_cloud_samples(player, state) if s.rank >= 2 and get_expertise_diff(max_sample_expertise, player, s) >= 2]:
