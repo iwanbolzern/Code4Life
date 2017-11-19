@@ -92,6 +92,9 @@ def get_rank(state, player):
     #num_rank_1 = len([s for s in player.samples if s.rank == 1])
     num_rank_3 = len([s for s in player.samples if s.rank == 3])
     total_ex = sum(player.expertise)
+    if min(player.expertise) < 2:
+        return 1
+
     if total_ex >= 11:
         if num_rank_3 == 2:
             return 2
