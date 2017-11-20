@@ -32,6 +32,7 @@ prev_robot_b = None
 same_station_count_a = 0
 same_station_count_b = 0
 first_sample_draw = True
+turn = 0
 
 def read_input():
     time = datetime.now()
@@ -41,7 +42,10 @@ def read_input():
     global same_station_count_a
     global same_station_count_b
     global first_sample_draw
+    global turn
+    turn += 1
     state = State()
+    state.turn = turn
 
     #Read robot a
     input_t = input()

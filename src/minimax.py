@@ -3,7 +3,7 @@ from typing import List
 
 from utils import sample_sort, get_next_molecule, positive_list_difference, sample_helps_projects
 from data_holder import State, Robot, Location, Action, Move, Sample
-from simulation import simulate_action
+from simulation import simulate_action, movement_matrix
 
 expertise_weight = 10
 
@@ -100,7 +100,7 @@ def get_rank(state, player):
         if player.prev_location == Location.DIAGNOSIS:
             return 2
         return 3
-    elif total_ex >= 9:
+    elif total_ex >= 8:
         #if num_rank_1 <= 1:
         #    return 1
         return 2
@@ -138,10 +138,14 @@ def possible_move(state: State, player: Robot) -> Move:
     if player.target == Location.START_POS:
         return Move(Action.GOTO, Location.SAMPLES)
 
+    if state.turn == 401 - movement_matrix[player.target.value][Location.LABORATORY.value] - len(player.ready_samples(state)) - 1 and\
+        player.ready_samples(state):
+        return Move(Action.GOTO, Location.LABORATORY)
+
     # Sample position
     elif player.target == Location.SAMPLES:
         producible_in_cloud = producible_cloud_samples(player, state)
-        max_samples = 2 if state.first_sample_draw else 3
+        max_samples = 3 if state.first_sample_draw else 3
         if (max_samples - len(producible_in_cloud)) > len(player.samples):
             return Move(Action.CONNECT, get_rank(state, player))
 
@@ -170,13 +174,12 @@ def possible_move(state: State, player: Robot) -> Move:
                 producible_in_hand:
             return Move(Action.GOTO, Location.LABORATORY)
 
-        if producible_in_hand and player.prev_location != Location.MOLECULES:
-            return Move(Action.GOTO, Location.MOLECULES)
-
         not_useful_samples = not_useful_samples_in_hand(player, state)
-
         if not_useful_samples:
             return Move(Action.CONNECT, not_useful_samples[0].id)
+
+        if producible_in_hand:
+            return Move(Action.GOTO, Location.MOLECULES)
 
         if producible_in_cloud and len(player.samples) >= 3:
             id = player.get_sorted_samples(state)[-1].id
